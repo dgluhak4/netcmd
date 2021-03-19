@@ -20,6 +20,7 @@ import getopt
 import os
 import subprocess
 import time
+import json
 #import readline
 from getpass import getpass
 
@@ -28,8 +29,6 @@ from netmiko import Netmiko
 
 # loading logging and preparing to log
 import logging
-logging.basicConfig(filename='test.log', level=logging.DEBUG)
-logger = logging.getLogger("netmiko")
 
 # import additional device/command related functions
 import NetDeviceFunc
@@ -64,7 +63,7 @@ def prepare_device_data(cmd_options):
     dev_params={"repeat":1,"template":"none","query_data":"","output":"","host_file_name":"","command_file_name":"",\
     "host_ip":"127.0.0.1","cmd":"show version","user_device_type":default_TYPE,"invalid_option":{'Device':0,'Command':0},\
     "option":{"Device":2,"Command":2}}
-    sys_params={"progress":SHOULD_PROGRESS,"store":SHOULD_STORE,"model":default_MODEL}
+    sys_params={"progress":SHOULD_PROGRESS,"store":SHOULD_STORE,"datamodel":default_MODEL}
 
     # analysis and prepraration of input arguments
     for curr_opts, curr_vals in cmd_options:
@@ -75,8 +74,10 @@ def prepare_device_data(cmd_options):
             SHOULD_PARSE=True
         elif curr_opts in ("-b","--bar"):
             SHOULD_PROGRESS=True
+            sys_params["progress"]=SHOULD_PROGRESS
         elif curr_opts in ("-s","--store"):
             SHOULD_STORE=True
+            sys_params["store"]=SHOULD_STORE
         elif curr_opts in ("-v","--timestamp"):
             SHOULD_STAMP=True
         elif curr_opts in ("-r","--repeat"):
@@ -127,9 +128,11 @@ def prepare_device_data(cmd_options):
             print(HELP)
             sys.exit(2)
     if dev_params["invalid_option"]['Device'] != 1:
+        print("Too many device options - should be only one")
         print(HELP)
         sys.exit(2)
     if dev_params["invalid_option"]['Command'] != 1:
+        print("Too many command options - should be only one")
         print(HELP)
         sys.exit(2)
     if dev_params["invalid_option"]['Device']*dev_params["invalid_option"]['Command'] > 0:
@@ -169,6 +172,8 @@ Main function that deploys list of commands to a list of devices and parses and 
     except getopt.GetoptError:
         print(HELP)
         sys.exit(2)
+    logging.basicConfig(filename='test.log', level=logging.DEBUG)
+    logger = logging.getLogger("netmiko")
     device_template={}  
     device_template, device_list = prepare_device_data(cmd_options)
      
