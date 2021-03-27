@@ -35,16 +35,19 @@ import NetDeviceFunc
 
 # GLOBALS
 HELP="Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [-j] <device+commands> [OPTIONs] \r\n \
+COMMANDS \
 -h --help Help screen\r\n\r\n \
 -d --device IP of the device OR -l --device_file_list file with the list of devices (mandatory)\r\n \
 -c --command single command to execute OR -x --cmd_file_list file with the list of commands per device (mandatory)\r\n \
 -j --json json formated file with list of devices and respected commands (one file for both device and command is used)\r\n \
+OPTIONS: \
 -r --repeat invoke repeat-based or time-based re-issuing of single command or list of commands (default is 1/once, 0 for infinite, XXs for every XX seconds)\r\n \
 -p --parse choose to parse output using textfsm (default is not to parse)\r\n \
 -t --template choose to present output date defined in custom template (default is without template, all data is displayed or stored)\r\n \
 -q --query a string to search for in command(s) outputs (mandatory if template is \"grep\")\r\n \
 -b --bar choose to use progress bar while waiting for outputs (invalid when using -d and -c options)\r\n \
 -y --device_type choose device type (defines who expect module processes outputs from the device)\r\n \
+-o --overwrite overwrite in-file provided username and password with the one taken from user input\r\n \
 -v --timestamp put local timestamp on each output\r\n \
 -s --store choose if want to write command output to a file/files\r\n"
 SHOULD_PARSE = False #when True parsing to dictonary, default is not to parse
@@ -53,6 +56,7 @@ SHOULD_STORE = False #when True should write command output to a file named afte
 SHOULD_TIME = False #when True repeat value means timing in seconds between repetion of command execution
 SHOULD_STAMP = False #when True put timestamp to every (set of) command(s) output from device
 SHOULD_INFINITE = False #indicating that process of executing command(s) on device(s) is repeating indefinetly
+SHOULD_OVERWRITE = False #indicating that in-file provided username and password has to be overwritten by the user input
 custom_DIV='%'
 default_TYPE="cisco_ios"
 default_MODEL="custom"
@@ -66,12 +70,12 @@ def exit_error(err_message="Unknown error"):
 
 # populating device list and options
 def prepare_device_data(cmd_options):
-    global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_STAMP, SHOULD_INFINITE
+    global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_STAMP, SHOULD_INFINITE, SHOULD_OVERWRITE
 
-    dev_params={"host_file_name":"","command_file_name":"","host_ip":"127.0.0.1","cmd":"",\
+    dev_params={"host_file_name":"","command_file_name":"","host_ip":"127.0.0.1","cmd":"","overwrite":SHOULD_OVERWRITE, \
         "user_device_type":default_TYPE,"invalid_option":{'Device':0,'Command':0},"option":{"Device":2,"Command":2}}
     sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"store":SHOULD_STORE,"stamp": SHOULD_STAMP, \
-        "time": SHOULD_TIME, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", "template":"none"}
+        "time": SHOULD_TIME, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", "template":"none", "infinite": False}
     dev_list=[]
 
     # analysis and prepraration of input arguments
@@ -115,6 +119,8 @@ def prepare_device_data(cmd_options):
             sys_params["template"]=curr_vals
         elif curr_opts in ("-q","--query"):
             sys_params["query_data"]=curr_vals
+        elif curr_opts in ("-o","--overwrite"):
+            sys_params["overwrite"] = True
         elif curr_opts in ("-j","--json"):
             sys_params["datamodel"]="json"
             dev_params["host_file_name"]=curr_vals
@@ -210,6 +216,17 @@ def prepare_device_data(cmd_options):
     elif (dev_params["option"]['Device']) == 3:
         # OPEN JSON FILE AND DO SOMETHING
         dev_list=json.load(hostfile)
+        for dev in dev_list:
+            if "username" in dev:
+                if (len(dev["username"]) == 0) or sys_params['overwrite']:
+                    dev["username"]=dev_user
+            else:
+                dev["username"]=dev_user
+            if "password" in dev:
+                if (len(dev["password"]) == 0) or sys_params['overwrite']:
+                    dev["password"]=dev_pass
+            else:
+                dev["username"]=dev_pass
         #print (dev_list)
     else:
         exit_error("Invalid reference to device list!")
