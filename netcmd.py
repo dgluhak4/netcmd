@@ -34,12 +34,12 @@ import logging
 import NetDeviceFunc
 
 # GLOBALS
-HELP="Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [-j] <device+commands> [OPTIONs] \r\n \
+HELP="Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [-j] <device+commands> [OPTIONs] \r\n\r\n \
 COMMANDS:\r\n\r\n \
 -h --help Help screen\r\n\r\n \
 -d --device IP of the device OR -l --device_file_list file with the list of devices (mandatory)\r\n \
 -c --command single command to execute OR -x --cmd_file_list file with the list of commands per device (mandatory)\r\n \
--j --json json formated file with list of devices and respected commands (one file for both device and command is used)\r\n \
+-j --json json formated file with list of devices and respected commands (one file for both device and command is used)\r\n\r\n \
 OPTIONS:\r\n\r\n \
 -r --repeat invoke repeat-based or time-based re-issuing of single command or list of commands (default is 1/once, 0 for infinite, XXs for every XX seconds)\r\n \
 -p --parse choose to parse output using textfsm (default is not to parse)\r\n \
@@ -217,6 +217,7 @@ def prepare_device_data(cmd_options):
         # OPEN JSON FILE AND DO SOMETHING
         dev_list=json.load(hostfile)
         for dev in dev_list:
+            print (dev)
             if "username" in dev:
                 if (len(dev["username"]) == 0) or dev_params['overwrite']:
                     dev["username"]=dev_user
