@@ -218,12 +218,12 @@ def prepare_device_data(cmd_options):
         dev_list=json.load(hostfile)
         for dev in dev_list:
             if "username" in dev:
-                if (len(dev["username"]) == 0) or sys_params['overwrite']:
+                if (len(dev["username"]) == 0) or dev_params['overwrite']:
                     dev["username"]=dev_user
             else:
                 dev["username"]=dev_user
             if "password" in dev:
-                if (len(dev["password"]) == 0) or sys_params['overwrite']:
+                if (len(dev["password"]) == 0) or dev_params['overwrite']:
                     dev["password"]=dev_pass
             else:
                 dev["username"]=dev_pass
