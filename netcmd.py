@@ -35,12 +35,12 @@ import NetDeviceFunc
 
 # GLOBALS
 HELP="Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [-j] <device+commands> [OPTIONs] \r\n \
-COMMANDS \
+COMMANDS:\r\n\r\n \
 -h --help Help screen\r\n\r\n \
 -d --device IP of the device OR -l --device_file_list file with the list of devices (mandatory)\r\n \
 -c --command single command to execute OR -x --cmd_file_list file with the list of commands per device (mandatory)\r\n \
 -j --json json formated file with list of devices and respected commands (one file for both device and command is used)\r\n \
-OPTIONS: \
+OPTIONS:\r\n\r\n \
 -r --repeat invoke repeat-based or time-based re-issuing of single command or list of commands (default is 1/once, 0 for infinite, XXs for every XX seconds)\r\n \
 -p --parse choose to parse output using textfsm (default is not to parse)\r\n \
 -t --template choose to present output date defined in custom template (default is without template, all data is displayed or stored)\r\n \
