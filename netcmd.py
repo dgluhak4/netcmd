@@ -59,7 +59,7 @@ SHOULD_INFINITE = False #indicating that process of executing command(s) on devi
 SHOULD_OVERWRITE = False #indicating that in-file provided username and password has to be overwritten by the user input
 custom_DIV='%'
 default_TYPE="cisco_ios"
-default_MODEL="custom"
+default_MODEL="custom" 
 
 # program exit function (with error message)
 def exit_error(err_message="Unknown error"):
@@ -109,9 +109,8 @@ def prepare_device_data(cmd_options):
                     sys_params['time'] = False
                     # If there should be infinite command execution repetition
                     if (sys_params["repeat"] == 0):
-                        SHOULD_INFINITE=True
                         sys_params["repeat"] = 65535
-
+                        sys_params['infinite'] = True
                 else:
                     exit_error("Invalid repetion request")
         elif curr_opts in ("-t","--template"):            
@@ -120,7 +119,7 @@ def prepare_device_data(cmd_options):
         elif curr_opts in ("-q","--query"):
             sys_params["query_data"]=curr_vals
         elif curr_opts in ("-o","--overwrite"):
-            sys_params["overwrite"] = True
+            dev_params["overwrite"] = True
         elif curr_opts in ("-j","--json"):
             sys_params["datamodel"]="json"
             dev_params["host_file_name"]=curr_vals
