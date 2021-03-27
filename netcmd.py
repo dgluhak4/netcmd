@@ -291,7 +291,7 @@ Main function that deploys list of commands to a list of devices and parses and 
         for device in device_list:
             #net_device = Netmiko(**device)
             output=""
-            for cmd in device['command']:
+            for cmd in device['commands']:
                 #output = output+os.linesep+net_device.send_command_timing(cmds)
                 output = output+os.linesep+cmd
                 #if (SHOULD_PROGRESS):
