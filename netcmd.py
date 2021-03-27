@@ -273,8 +273,8 @@ Main function that deploys list of commands to a list of devices and parses and 
     """
     global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_STAMP, SHOULD_INFINITE
     try:
-        cmd_options, cmd_values = getopt.getopt(argumentList, "hpbsvj:d:l:c:x:r:t:q:y:", ["help","parse","bar","store","timestamp",\
-            "device_list=","device=","device_file_list=","command=","cmd_file_list=","repeat=","template=","query=","device_type=","json="])
+        cmd_options, cmd_values = getopt.getopt(argumentList, "hpbsvoj:d:l:c:x:r:t:q:y:", ["help","parse","bar","store","overwrite","timestamp",\
+            "json=","device_list=","device=","device_file_list=","command=","cmd_file_list=","repeat=","template=","query=","device_type="])
     except getopt.GetoptError:
         exit_error("Invalid input option!")
     logging.basicConfig(filename='test.log', level=logging.DEBUG)
