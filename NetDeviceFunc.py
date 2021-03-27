@@ -26,8 +26,7 @@ def progress_bar(host_file_name="",command_file_name="", custom_DIV="%"):
         if command_file_name:
             with open(command_file_name, 'r') as cmdfile:
                 cmdlineseq=cmdfile.readline().split(custom_DIV)
-                for cmds in cmdlineseq[:len(cmdlineseq)-1]:
-                    dim2+=1
+                dim2=len(cmdlineseq)
         else:
             dim2=1
         #print ("DIM1=", dim1, "DIM2=", dim2)

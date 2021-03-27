@@ -34,11 +34,12 @@ import logging
 import NetDeviceFunc
 
 # GLOBALS
-HELP="Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [OPTIONs] \r\n \
+HELP="Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [-j] <device+commands> [OPTIONs] \r\n \
 -h --help Help screen\r\n\r\n \
 -d --device IP of the device OR -l --device_file_list file with the list of devices (mandatory)\r\n \
 -c --command single command to execute OR -x --cmd_file_list file with the list of commands per device (mandatory)\r\n \
--r --repeat invoke repeat-based ot time-based re-issuing of single command or list of commands (default is 1/once, 0 for infinite, XXs for every XX seconds)\r\n \
+-j --json json formated file with list of devices and respected commands (one file for both device and command is used)\r\n \
+-r --repeat invoke repeat-based or time-based re-issuing of single command or list of commands (default is 1/once, 0 for infinite, XXs for every XX seconds)\r\n \
 -p --parse choose to parse output using textfsm (default is not to parse)\r\n \
 -t --template choose to present output date defined in custom template (default is without template, all data is displayed or stored)\r\n \
 -q --query a string to search for in command(s) outputs (mandatory if template is \"grep\")\r\n \
@@ -56,56 +57,76 @@ custom_DIV='%'
 default_TYPE="cisco_ios"
 default_MODEL="custom"
 
+# program exit function (with error message)
+def exit_error(err_message="Unknown error"):
+
+    print(err_message)
+    print(HELP)
+    sys.exit(2)
+
 # populating device list and options
 def prepare_device_data(cmd_options):
     global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_STAMP, SHOULD_INFINITE
 
-    dev_params={"repeat":1,"template":"none","query_data":"","output":"","host_file_name":"","command_file_name":"",\
-    "host_ip":"127.0.0.1","cmd":"show version","user_device_type":default_TYPE,"invalid_option":{'Device':0,'Command':0},\
-    "option":{"Device":2,"Command":2}}
-    sys_params={"progress":SHOULD_PROGRESS,"store":SHOULD_STORE,"datamodel":default_MODEL}
+    dev_params={"host_file_name":"","command_file_name":"","host_ip":"127.0.0.1","cmd":"",\
+        "user_device_type":default_TYPE,"invalid_option":{'Device':0,'Command':0},"option":{"Device":2,"Command":2}}
+    sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"store":SHOULD_STORE,"stamp": SHOULD_STAMP, \
+        "time": SHOULD_TIME, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", "template":"none"}
+    dev_list=[]
 
     # analysis and prepraration of input arguments
     for curr_opts, curr_vals in cmd_options:
         if curr_opts in ("-h", "--help"):
             print(HELP)
             sys.exit(0)
-        elif curr_opts in ("-p","--parse"):
-            SHOULD_PARSE=True
-        elif curr_opts in ("-b","--bar"):
-            SHOULD_PROGRESS=True
-            sys_params["progress"]=SHOULD_PROGRESS
-        elif curr_opts in ("-s","--store"):
-            SHOULD_STORE=True
-            sys_params["store"]=SHOULD_STORE
-        elif curr_opts in ("-v","--timestamp"):
-            SHOULD_STAMP=True
+        elif curr_opts in ("-p","--parse"):            
+            sys_params["parse"] = True
+        elif curr_opts in ("-b","--bar"):            
+            sys_params["progress"] = True
+        elif curr_opts in ("-s","--store"):            
+            sys_params["store"] = True
+        elif curr_opts in ("-v","--timestamp"):            
+            sys_params["stamp"] = True
         elif curr_opts in ("-r","--repeat"):
+            # if repeat parameter is a number
             if (curr_vals.isdigit()):
-                dev_params["repeat"]=eval(curr_vals)
-                SHOULD_TIME=False
-                # If there should be infinite command execution repetition
-                if (dev_params["repeat"] == 0):
-                    SHOULD_INFINITE=True
-                    dev_params["repeat"] = 65535
+                sys_params['repeat']=eval(curr_vals)
+                sys_params['time'] = False
+                # for continuos and infinite command execution repetition, repeat = 65535
+                if (sys_params["repeat"] == 0):                    
+                    sys_params["repeat"] = 65535                    
+                    sys_params['infinite'] = True
+            # if repeat parameter is a string
             else:
-                dev_params["repeat"]=eval(curr_vals[:len(curr_vals)-1])
+                sys_params["repeat"]=eval(curr_vals[:len(curr_vals)-1])
                 if (curr_vals[len(curr_vals)-1] == 's'):
-                    SHOULD_TIME = True
+                    sys_params['time'] = True
                 elif (curr_vals[len(curr_vals)-1] == 'r'):
-                    SHOULD_TIME = False
+                    sys_params['time'] = False
                     # If there should be infinite command execution repetition
-                    if (dev_params["repeat"] == 0):
+                    if (sys_params["repeat"] == 0):
                         SHOULD_INFINITE=True
-                        dev_params["repeat"] = 65535
+                        sys_params["repeat"] = 65535
+
                 else:
-                    print(HELP)
-                    sys.exit(2)    
-        elif curr_opts in ("-t","--template"):
-            SHOULD_PARSE=True
-            dev_params["template"]=curr_vals
+                    exit_error("Invalid repetion request")
+        elif curr_opts in ("-t","--template"):            
+            sys_params["parse"] = True
+            sys_params["template"]=curr_vals
         elif curr_opts in ("-q","--query"):
-            dev_params["query_data"]=curr_vals
+            sys_params["query_data"]=curr_vals
+        elif curr_opts in ("-j","--json"):
+            sys_params["datamodel"]="json"
+            dev_params["host_file_name"]=curr_vals
+            dev_params["invalid_option"]['Command'] +=1
+            dev_params["invalid_option"]['Device'] +=1            
+            dev_params["option"]['Device']=3
+            dev_params["option"]['Command']=3
+            #print (dev_params["host_file_name"])
+            try:
+                hostfile=open(dev_params['host_file_name'],'r')
+            except FileNotFoundError as err:
+                exit_error(err)
         elif curr_opts in ("-y","--device_type"):
             dev_params["user_device_type"]=curr_vals
         elif curr_opts in ("-d","--device"):
@@ -115,48 +136,116 @@ def prepare_device_data(cmd_options):
         elif curr_opts in ("-c","--command"):
             dev_params["cmd"]=curr_vals
             dev_params["invalid_option"]['Command'] +=1
-            dev_params["option"]['Command']=1
+            dev_params["option"]['Command']=1            
         elif curr_opts in ("-l","--device_file_list"):
             dev_params["host_file_name"]=curr_vals
             dev_params["invalid_option"]['Device'] += 1     
-            dev_params["option"]['Device']=0
+            dev_params["option"]['Device']=2
+            try:
+                hostfile=open(dev_params['host_file_name'],'r')
+            except FileNotFoundError as err:
+                exit_error(err)
         elif curr_opts in ("-x","--cmd_file_list"):
             dev_params["command_file_name"]=curr_vals
             dev_params["invalid_option"]['Command'] +=1
-            dev_params["option"]['Command']=0
+            dev_params["option"]['Command']=2
+            try:
+                cmdfile=open(dev_params['command_file_name'],'r')
+            except FileNotFoundError as err:
+                exit_error(err)
         else:
             print(HELP)
             sys.exit(2)
     if dev_params["invalid_option"]['Device'] != 1:
-        print("Too many device options - should be only one")
-        print(HELP)
-        sys.exit(2)
+        exit_error("Too little or too many device options - should be only one")        
     if dev_params["invalid_option"]['Command'] != 1:
-        print("Too many command options - should be only one")
-        print(HELP)
-        sys.exit(2)
-    if dev_params["invalid_option"]['Device']*dev_params["invalid_option"]['Command'] > 0:
-        SHOULD_PROGRESS=False
-    return dev_params, dev_dict
+        exit_error("Too little or too many command options - should be only one")        
+    if dev_params["invalid_option"]['Device']*dev_params["invalid_option"]['Command'] > 0:        
+        sys_params['progress'] = False
+
+    # provjera analize input argumenata
+    #print (dev_params)
+    #print (sys_params)
+    # Getting username and password of user connecting to devices 
+    dev_user = input("Input user name used to collect information from devices: ")
+    #print ("Input user password used to connect to devices: ")
+    dev_pass = getpass()
+    # popunjavanje liste uredjaja
+    cmdlineseq=[]
+    # ako je samo jedan uredjaj iz prompta
+    if (dev_params["option"]['Device']) == 1:
+        hostline=dev_params['host_ip']+custom_DIV+dev_params['user_device_type']+custom_DIV+"SINGLE_DEVICE"
+        temp_device=prepare_device(hostline,dev_user,dev_pass)        
+        if (dev_params["option"]['Command']) == 1:
+            temp_device['commands'].append(dev_params['cmd'])
+        elif (dev_params["option"]['Command']) == 2:            
+            # Populating command list for one device
+            cmdline=cmdfile.readline()
+            #print(cmdline)
+            cmdlineseq=cmdline.split(custom_DIV)
+            temp_device['commands']=cmdlineseq.copy()
+            cmdfile.close()
+        else:
+            exit_error("JSON model not allowed in single device input parameter!")
+        dev_list.append(temp_device)
+    elif (dev_params["option"]['Device']) == 2:            
+        if (dev_params["option"]['Command']) == 3:
+            exit_error("JSON model not allowed in single device input parameter!")
+        else:    
+            for hostline in hostfile:
+                cmdlineseq.clear()
+                temp_device=prepare_device(hostline,dev_user,dev_pass)
+                # Populating command list for current device
+                if (dev_params["option"]['Command']) == 2: 
+                    cmdline=cmdfile.readline()
+                    #print(cmdline)
+                    cmdlineseq=cmdline.split(custom_DIV)
+                else:
+                    cmdlineseq.append(dev_params['cmd'])
+                temp_device['commands']=cmdlineseq.copy()
+                dev_list.append(temp_device)      
+            if (dev_params["option"]['Command']) == 2:   
+                cmdfile.close()                        
+        hostfile.close()
+    elif (dev_params["option"]['Device']) == 3:
+        # OPEN JSON FILE AND DO SOMETHING
+        dev_list=json.load(hostfile)
+        #print (dev_list)
+    else:
+        exit_error("Invalid reference to device list!")
+
+    return sys_params, dev_list
 
 # Populating device with device properties
 def prepare_device(hostline,dev_user,dev_pass):
-    hostlineseq=hostline.split(custom_DIV)
-    #print (hostlineseq);
+        
+    hostlineseq=hostline.split(custom_DIV)    
+    #print (len(hostlineseq))
+    #print (len(hostline))
+    if (len(hostlineseq) == 3):
+        hostlineseq.append(dev_user)
+        hostlineseq.append(dev_pass)
+    #print (hostlineseq)
+    #print (hostline)
     curr_device = {
         'host': hostlineseq[0],
-        'username': dev_user,
-        'password': dev_pass,
-        'secret': dev_pass,
         #'device_type': 'cisco_ios'
-        'device_type': hostlineseq[1][:len(hostline)-2]
+        'device_type': hostlineseq[1][:len(hostline)-2],
+        'name': hostlineseq[2],
+        #'username': dev_user,
+        #'password': dev_pass,        
+        'username': hostlineseq[3],
+        'password': hostlineseq[4],
+        'secret': hostlineseq[4],
         #'global_delay_factor': 2
+        'commands':[],
+        'output':[]
     }
     if (curr_device['device_type'] == 'juniper'):
         curr_device['global_delay_factor'] = 2
-    elif (curr_device['device_type'] == 'linux'):
-        curr_device['username'] = hostlineseq[3]
-        curr_device['password'] = hostlineseq[4]
+    #elif (curr_device['device_type'] == 'linux'):
+    #    curr_device['username'] = hostlineseq[3]
+    #    curr_device['password'] = hostlineseq[4]
     #print (curr_device['username']," ",curr_device['password'])
     return curr_device
 
@@ -167,22 +256,46 @@ Main function that deploys list of commands to a list of devices and parses and 
     """
     global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_STAMP, SHOULD_INFINITE
     try:
-        cmd_options, cmd_values = getopt.getopt(argumentList, "hpbsvjd:l:c:x:r:t:q:y:", ["help","parse","bar","store","timestamp",\
-            "device_list=","device=","device_file_list=","command=","cmd_file_list=","repeat=","template=","query=","device_type="])
+        cmd_options, cmd_values = getopt.getopt(argumentList, "hpbsvj:d:l:c:x:r:t:q:y:", ["help","parse","bar","store","timestamp",\
+            "device_list=","device=","device_file_list=","command=","cmd_file_list=","repeat=","template=","query=","device_type=","json="])
     except getopt.GetoptError:
-        print(HELP)
-        sys.exit(2)
+        exit_error("Invalid input option!")
     logging.basicConfig(filename='test.log', level=logging.DEBUG)
     logger = logging.getLogger("netmiko")
+    sys_params={}
     device_template={}  
-    device_template, device_list = prepare_device_data(cmd_options)
-     
+    device_list=[]
+    sys_params, device_list = prepare_device_data(cmd_options)
+    print(sys_params)
+    print(device_list)
 
-"""   
-    # Getting username and password of user connecting to devices 
-    dev_user = input("Input user name used to collect information from devices: ")
-    #print ("Input user password used to connect to devices: ")
-    dev_pass = getpass()
+    # Main loop        
+    while ((sys_params['time'] or sys_params['infinite']) or sys_params['repeat']):     
+        for device in device_list:
+            #net_device = Netmiko(**device)
+            output=""
+            for cmd in device['command']:
+                #output = output+os.linesep+net_device.send_command_timing(cmds)
+                output = output+os.linesep+cmd
+                #if (SHOULD_PROGRESS):
+                #    NetDeviceFunc.progress_bar()   
+                print (output)
+        if not sys_params['store']:
+            print("Nema snimanja")
+        else:
+            print("Sada snimam jednu iteraciju")
+    #while loop control mechanism
+        if (sys_params['time']):
+            time.sleep(float(sys_params['repeat']))
+        elif (not sys_params['infinite']):
+            sys_params['repeat'] = sys_params['repeat']-1
+        else:
+            pass
+        output=""
+        NetDeviceFunc.site_devices.clear()
+        #NetDeviceFunc.clear_output()    
+
+"""  
     #progress bar initialization
     if (SHOULD_PROGRESS):
         NetDeviceFunc.progress_bar(host_file_name, command_file_name, custom_DIV)
