@@ -74,7 +74,7 @@ def prepare_device_data(cmd_options):
 
     dev_params={"host_file_name":"","command_file_name":"","host_ip":"127.0.0.1","cmd":"","overwrite":SHOULD_OVERWRITE, \
         "user_device_type":default_TYPE,"invalid_option":{'Device':0,'Command':0},"option":{"Device":2,"Command":2}}
-    sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"store":SHOULD_STORE,"stamp": SHOULD_STAMP, \
+    sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"store":SHOULD_STORE,"stamp": SHOULD_STAMP, "total_ops":0, \
         "time": SHOULD_TIME, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", "template":"none", "infinite": False}
     dev_list=[]
 
@@ -83,8 +83,9 @@ def prepare_device_data(cmd_options):
         if curr_opts in ("-h", "--help"):
             print(HELP)
             sys.exit(0)
-        elif curr_opts in ("-p","--parse"):            
-            sys_params["parse"] = True
+        elif curr_opts in ("-p","--parse"):   
+            exit_error("Feature not implemented yet")         
+            #sys_params["parse"] = True
         elif curr_opts in ("-b","--bar"):            
             sys_params["progress"] = True
         elif curr_opts in ("-s","--store"):            
@@ -113,11 +114,13 @@ def prepare_device_data(cmd_options):
                         sys_params['infinite'] = True
                 else:
                     exit_error("Invalid repetion request")
-        elif curr_opts in ("-t","--template"):            
-            sys_params["parse"] = True
-            sys_params["template"]=curr_vals
+        elif curr_opts in ("-t","--template"):         
+            exit_error("Feature not implemented yet")
+            #sys_params["parse"] = True
+            #sys_params["template"]=curr_vals
         elif curr_opts in ("-q","--query"):
-            sys_params["query_data"]=curr_vals
+            exit_error("Feature not implemented yet")
+            #sys_params["query_data"]=curr_vals
         elif curr_opts in ("-o","--overwrite"):
             dev_params["overwrite"] = True
         elif curr_opts in ("-j","--json"):
@@ -165,8 +168,10 @@ def prepare_device_data(cmd_options):
         exit_error("Too little or too many device options - should be only one")        
     if dev_params["invalid_option"]['Command'] != 1:
         exit_error("Too little or too many command options - should be only one")        
-    if dev_params["invalid_option"]['Device']*dev_params["invalid_option"]['Command'] > 0:        
+    if dev_params["option"]['Device']*dev_params["option"]['Command'] == 1:                
         sys_params['progress'] = False
+    else:
+        sys_params['total_ops']*=sys_params['repeat']
 
     # provjera analize input argumenata
     #print (dev_params)
@@ -176,18 +181,20 @@ def prepare_device_data(cmd_options):
     #print ("Input user password used to connect to devices: ")
     dev_pass = getpass()
     # popunjavanje liste uredjaja
-    cmdlineseq=[]
+    cmdlineseq=[] 
     # ako je samo jedan uredjaj iz prompta
     if (dev_params["option"]['Device']) == 1:
         hostline=dev_params['host_ip']+custom_DIV+dev_params['user_device_type']+custom_DIV+"SINGLE_DEVICE"
         temp_device=prepare_device(hostline,dev_user,dev_pass)        
         if (dev_params["option"]['Command']) == 1:
             temp_device['commands'].append(dev_params['cmd'])
+            sys_params['total_ops']=1
         elif (dev_params["option"]['Command']) == 2:            
             # Populating command list for one device
             cmdline=cmdfile.readline()
             #print(cmdline)
             cmdlineseq=cmdline.split(custom_DIV)
+            sys_params['total_ops']+=len(cmdlineseq)
             temp_device['commands']=cmdlineseq.copy()
             cmdfile.close()
         else:
@@ -197,16 +204,18 @@ def prepare_device_data(cmd_options):
         if (dev_params["option"]['Command']) == 3:
             exit_error("JSON model not allowed in single device input parameter!")
         else:    
-            for hostline in hostfile:
+            for hostline in hostfile:                
                 cmdlineseq.clear()
                 temp_device=prepare_device(hostline,dev_user,dev_pass)
                 # Populating command list for current device
                 if (dev_params["option"]['Command']) == 2: 
-                    cmdline=cmdfile.readline()
+                    cmdline=cmdfile.readline()                    
                     #print(cmdline)
                     cmdlineseq=cmdline.split(custom_DIV)
+                    sys_params['total_ops']+=len(cmdlineseq)
                 else:
                     cmdlineseq.append(dev_params['cmd'])
+                    sys_params['total_ops']+=len(cmdlineseq)
                 temp_device['commands']=cmdlineseq.copy()
                 dev_list.append(temp_device)      
             if (dev_params["option"]['Command']) == 2:   
@@ -227,6 +236,7 @@ def prepare_device_data(cmd_options):
                     dev["password"]=dev_pass
             else:
                 dev["username"]=dev_pass
+            sys_params['total_ops']+=len(dev['commands'])
         #print (dev_list)
     else:
         exit_error("Invalid reference to device list!")
@@ -286,17 +296,20 @@ Main function that deploys list of commands to a list of devices and parses and 
     print(sys_params)
     print(device_list)
 
-    # Main loop        
+    # Main loop   
+    count_ops=0     
     while ((sys_params['time'] or sys_params['infinite']) or sys_params['repeat']):     
         for device in device_list:
             #net_device = Netmiko(**device)
             output=""
             for cmd in device['commands']:
+                count_ops+=1
                 #output = output+os.linesep+net_device.send_command_timing(cmds)
                 output = output+os.linesep+cmd
-                #if (SHOULD_PROGRESS):
-                #    NetDeviceFunc.progress_bar()   
-                print (output)
+                if (sys_params['progress'] and sys_params['store']):
+                    #print (sys_params['total_ops'], count_ops)
+                    NetDeviceFunc.progress_bar(sys_params['total_ops'],count_ops)   
+                #print (output)
         if not sys_params['store']:
             print("Nema snimanja")
         else:
@@ -304,6 +317,7 @@ Main function that deploys list of commands to a list of devices and parses and 
     #while loop control mechanism
         if (sys_params['time']):
             time.sleep(float(sys_params['repeat']))
+            count_ops=0
         elif (not sys_params['infinite']):
             sys_params['repeat'] = sys_params['repeat']-1
         else:
