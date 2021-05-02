@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """
-Script connects to Cisco devices, gets some commands output and parses or repeats if needed
+Script connects to Cisco devices, gets some commands output and parses output or repeats commands if needed
 
 Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [OPTIONs]
 -h --help Help screen
@@ -12,7 +12,6 @@ Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [OPTIONs]
 -q --query a string to search for in command(s) outputs (mandatory if template is \"grep\")
 -b --bar choose to use progress bar while waiting for outputs (invalid when using -d and -c options)
 -y --device_type choose device type (defines who expect module processes outputs from the device)
--v --timestamp put local timestamp on each output
 -s --store choose if want to write command output to a file/files"
 """
 import sys
@@ -48,34 +47,47 @@ OPTIONS:\r\n\r\n \
 -b --bar choose to use progress bar while waiting for outputs (invalid when using -d and -c options)\r\n \
 -y --device_type choose device type (defines who expect module processes outputs from the device)\r\n \
 -o --overwrite overwrite in-file provided username and password with the one taken from user input\r\n \
--v --timestamp put local timestamp on each output\r\n \
 -s --store choose if want to write command output to a file/files\r\n"
-SHOULD_PARSE = False #when True parsing to dictonary, default is not to parse
-SHOULD_PROGRESS = False #when True display progress bar while executing multiple comamands on multiple devices, default is not to display progress bar
-SHOULD_STORE = False #when True should write command output to a file named after host, default is to not store the output          
-SHOULD_TIME = False #when True repeat value means timing in seconds between repetion of command execution
-SHOULD_STAMP = False #when True put timestamp to every (set of) command(s) output from device
-SHOULD_INFINITE = False #indicating that process of executing command(s) on device(s) is repeating indefinetly
-SHOULD_OVERWRITE = False #indicating that in-file provided username and password has to be overwritten by the user input
-custom_DIV='%'
-default_TYPE="cisco_ios"
-default_MODEL="custom" 
 
 # program exit function (with error message)
 def exit_error(err_message="Unknown error"):
+    """
+    Exit function expanded with detail error message.
 
+    Input: Error message
+    """
     print(err_message)
     print(HELP)
     sys.exit(2)
 
+# progress bar simulation function
+def progress_bar(total_ops, count_ops):        
+
+    signs=['|','/','-','\\']
+    print("\r",signs[count_ops%4],"  {0:6.2f}%".format((count_ops/total_ops)*100), end='')
+
+
 # populating device list and options
 def prepare_device_data(cmd_options):
-    global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_STAMP, SHOULD_INFINITE, SHOULD_OVERWRITE
+    """
+    Function does formating of input data, such as device list and device command list files, commands and options
+    The output is populated dictionary with devices and device commands
+    """
+
+    SHOULD_PARSE = False #when True parsing to dictonary, default is not to parse
+    SHOULD_PROGRESS = False #when True display progress bar while executing multiple comamands on multiple devices, default is not to display progress bar
+    SHOULD_STORE = False #when True should write command output to a file named after host, default is to not store the output          
+    SHOULD_TIME = False #when True repeat value means timing in seconds between repetion of command execution
+    SHOULD_INFINITE = False #indicating that process of executing command(s) on device(s) is repeating indefinetly
+    SHOULD_OVERWRITE = False #indicating that in-file provided username and password has to be overwritten by the user input
+    custom_DIV='%'
+    default_TYPE="cisco_ios"
+    default_MODEL="custom" 
 
     dev_params={"host_file_name":"","command_file_name":"","host_ip":"127.0.0.1","cmd":"","overwrite":SHOULD_OVERWRITE, \
         "user_device_type":default_TYPE,"invalid_option":{'Device':0,'Command':0},"option":{"Device":2,"Command":2}}
-    sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"store":SHOULD_STORE,"stamp": SHOULD_STAMP, "total_ops":0, \
-        "time": SHOULD_TIME, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", "template":"none", "infinite": False}
+    sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"time_start":time.asctime(),"timestamps":[],"total_ops":0, \
+        "time": SHOULD_TIME, "store": SHOULD_STORE, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", "template":"none", "infinite": False}
     dev_list=[]
 
     # analysis and prepraration of input arguments
@@ -90,8 +102,6 @@ def prepare_device_data(cmd_options):
             sys_params["progress"] = True
         elif curr_opts in ("-s","--store"):            
             sys_params["store"] = True
-        elif curr_opts in ("-v","--timestamp"):            
-            sys_params["stamp"] = True
         elif curr_opts in ("-r","--repeat"):
             # if repeat parameter is a number
             if (curr_vals.isdigit()):
@@ -245,6 +255,9 @@ def prepare_device_data(cmd_options):
 
 # Populating device with device properties
 def prepare_device(hostline,dev_user,dev_pass):
+    """
+    Function prepares all data need for successful connection to remote device.
+    """
         
     hostlineseq=hostline.split(custom_DIV)    
     #print (len(hostlineseq))
@@ -281,9 +294,9 @@ def main(argumentList):
     """
 Main function that deploys list of commands to a list of devices and parses and stores its output
     """
-    global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_STAMP, SHOULD_INFINITE
+    global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_INFINITE
     try:
-        cmd_options, cmd_values = getopt.getopt(argumentList, "hpbsvoj:d:l:c:x:r:t:q:y:", ["help","parse","bar","store","overwrite","timestamp",\
+        cmd_options, cmd_values = getopt.getopt(argumentList, "hpbsoj:d:l:c:x:r:t:q:y:", ["help","parse","bar","store","overwrite",\
             "json=","device_list=","device=","device_file_list=","command=","cmd_file_list=","repeat=","template=","query=","device_type="])
     except getopt.GetoptError:
         exit_error("Invalid input option!")
@@ -297,11 +310,15 @@ Main function that deploys list of commands to a list of devices and parses and 
     print(device_list)
 
     # Main loop   
-    count_ops=0     
-    while ((sys_params['time'] or sys_params['infinite']) or sys_params['repeat']):     
+    count_ops=0 #count_ops=current number of operation done (operation=command/device)
+    iter=sys_params['repeat'] #iter=number of expected iterations
+    citer=0 #citer=current iteration
+    sys_params['timestamps'].append(time.time())
+    while ((sys_params['time'] or sys_params['infinite']) or iter):    
+        citer+=1        
         for device in device_list:
             #net_device = Netmiko(**device)
-            output=""
+            output=""                        
             for cmd in device['commands']:
                 count_ops+=1
                 #output = output+os.linesep+net_device.send_command_timing(cmds)
@@ -310,16 +327,22 @@ Main function that deploys list of commands to a list of devices and parses and 
                     #print (sys_params['total_ops'], count_ops)
                     NetDeviceFunc.progress_bar(sys_params['total_ops'],count_ops)   
                 #print (output)
+        sys_params['timestamps'].append(time.time())
         if not sys_params['store']:
-            print("Nema snimanja")
+            print("#Iteration: {}, at: {}".format(citer,time.ctime(sys_params['timestamps'][citer])))
+            print("#Operations: {}/{}, time took: {:.4f}".format(count_ops,sys_params['total_ops']*sys_params['repeat'],sys_params['timestamps'][citer]-sys_params['timestamps'][citer-1]))
+            print(output)
+            #print(sys_params)
         else:
+            print("#Iteration: {}, at: {}".format(citer,time.ctime(sys_params['timestamps'][citer])))
+            print("#Operations: {}/{}, time took: {:.4f}".format(count_ops,sys_params['total_ops']*sys_params['repeat'],sys_params['timestamps'][citer]-sys_params['timestamps'][citer-1]))
             print("Sada snimam jednu iteraciju")
     #while loop control mechanism
         if (sys_params['time']):
             time.sleep(float(sys_params['repeat']))
             count_ops=0
         elif (not sys_params['infinite']):
-            sys_params['repeat'] = sys_params['repeat']-1
+            iter = iter-1
         else:
             pass
         output=""
