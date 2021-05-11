@@ -87,7 +87,8 @@ def prepare_device_data(cmd_options):
     dev_params={"host_file_name":"","command_file_name":"","host_ip":"127.0.0.1","cmd":"","overwrite":SHOULD_OVERWRITE, \
         "user_device_type":default_TYPE,"invalid_option":{'Device':0,'Command':0},"option":{"Device":2,"Command":2}}
     sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"time_start":time.asctime(),"timestamps":[],"total_ops":0, \
-        "time": SHOULD_TIME, "store": SHOULD_STORE, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", "template":"none", "infinite": False}
+        "time": SHOULD_TIME, "store": SHOULD_STORE, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", \
+        "template":"none", "infinite": False, "divisor": custom_DIV}
     dev_list=[]
 
     # analysis and prepraration of input arguments
@@ -195,7 +196,7 @@ def prepare_device_data(cmd_options):
     # ako je samo jedan uredjaj iz prompta
     if (dev_params["option"]['Device']) == 1:
         hostline=dev_params['host_ip']+custom_DIV+dev_params['user_device_type']+custom_DIV+"SINGLE_DEVICE"
-        temp_device=prepare_device(hostline,dev_user,dev_pass)        
+        temp_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"])        
         if (dev_params["option"]['Command']) == 1:
             temp_device['commands'].append(dev_params['cmd'])
             sys_params['total_ops']=1
@@ -216,7 +217,7 @@ def prepare_device_data(cmd_options):
         else:    
             for hostline in hostfile:                
                 cmdlineseq.clear()
-                temp_device=prepare_device(hostline,dev_user,dev_pass)
+                temp_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"])
                 # Populating command list for current device
                 if (dev_params["option"]['Command']) == 2: 
                     cmdline=cmdfile.readline()                    
@@ -254,7 +255,7 @@ def prepare_device_data(cmd_options):
     return sys_params, dev_list
 
 # Populating device with device properties
-def prepare_device(hostline,dev_user,dev_pass):
+def prepare_device(hostline,dev_user,dev_pass, custom_DIV):
     """
     Function prepares all data need for successful connection to remote device.
     """
@@ -294,7 +295,7 @@ def main(argumentList):
     """
 Main function that deploys list of commands to a list of devices and parses and stores its output
     """
-    global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_INFINITE
+    # global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_INFINITE
     try:
         cmd_options, cmd_values = getopt.getopt(argumentList, "hpbsoj:d:l:c:x:r:t:q:y:", ["help","parse","bar","store","overwrite",\
             "json=","device_list=","device=","device_file_list=","command=","cmd_file_list=","repeat=","template=","query=","device_type="])
