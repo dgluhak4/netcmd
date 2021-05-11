@@ -2,11 +2,11 @@
   {
 		"device": {
 			"host": "10.1.248.105",
-			"device_type": "cisco_ios",
-			"hostname": "FINA-VUK-R97-GKC-SA",
+			"device_type": "cisco_ios",			
 			"username": "dd",
 			"password": "sdf345"
 		},
+		"hostname": "FINA-VUK-R97-GKC-SA",
 		"commands": [
 			"show vlan brief",
 			"show cdp nei"
@@ -15,11 +15,11 @@
   {
 		"device": {
 			"host": "10.1.248.115",
-			"device_type": "cisco_ios",
-			"hostname": "FINA-VUK-R6-GKC-SA",
+			"device_type": "cisco_ios",			
 			"username": "ff",
 			"password": "asd234"
 		},
+		"hostname": "FINA-VUK-R6-GKC-SA",
 		"commands": [
 	  	"show version",
 	  	"show int status"

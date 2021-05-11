@@ -247,6 +247,7 @@ def prepare_device_data(cmd_options):
                     dev["device"]["password"]=dev_pass
             else:
                 dev["device"]["password"]=dev_pass
+            dev["output"]=[]
             sys_params['total_ops']+=len(dev['commands'])
         #print (dev_list)
     else:
@@ -271,8 +272,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV):
     netmiko_device = {
         'host': hostlineseq[0],
         #'device_type': 'cisco_ios'
-        'device_type': hostlineseq[1][:len(hostline)-2],
-        'name': hostlineseq[2],
+        'device_type': hostlineseq[1][:len(hostline)-2],        
         #'username': dev_user,
         #'password': dev_pass,        
         'username': hostlineseq[3],
@@ -288,6 +288,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV):
     #print (netmiko_device['username']," ",netmiko_device['password'])
     new_device = {
         'device':netmiko_device,
+        'hostname': hostlineseq[2],
         'commands':[],
         'output':[]
     }
