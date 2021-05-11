@@ -256,7 +256,7 @@ def prepare_device_data(cmd_options):
     return sys_params, dev_list
 
 # Populating device with device properties
-def prepare_device(hostline,dev_user,dev_pass, custom_DIV):
+def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite):
     """
     Function prepares all data need for successful connection to remote device.
     """
@@ -267,6 +267,13 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV):
     if (len(hostlineseq) == 3):
         hostlineseq.append(dev_user)
         hostlineseq.append(dev_pass)
+    elif (overwrite):
+        hostlineseq.pop()
+        hostlineseq.pop()
+        hostlineseq.append(dev_user)
+        hostlineseq.append(dev_pass)
+    else:
+        pass
     #print (hostlineseq)
     #print (hostline)
     netmiko_device = {
@@ -323,7 +330,7 @@ Main function that deploys list of commands to a list of devices and parses and 
         citer+=1        
         for device in device_list:
             print(device["device"])
-            net_device = Netmiko(**device["device"])
+            net_device = Netmiko(**(device["device"]))
             output=""                        
             for cmd in device['commands']:
                 count_ops+=1
