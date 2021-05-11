@@ -195,40 +195,40 @@ def prepare_device_data(cmd_options):
     cmdlineseq=[] 
     # ako je samo jedan uredjaj iz prompta
     if (dev_params["option"]['Device']) == 1:
-        hostline=dev_params['host_ip']+custom_DIV+dev_params['user_device_type']+custom_DIV+"SINGLE_DEVICE"
-        temp_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"])        
+        hostline=dev_params['host_ip']+sys_params["divisor"]+dev_params['user_device_type']+sys_params["divisor"]+"SINGLE_DEVICE"
+        new_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"])        
         if (dev_params["option"]['Command']) == 1:
-            temp_device['commands'].append(dev_params['cmd'])
+            new_device['commands'].append(dev_params['cmd'])
             sys_params['total_ops']=1
         elif (dev_params["option"]['Command']) == 2:            
             # Populating command list for one device
             cmdline=cmdfile.readline()
             #print(cmdline)
-            cmdlineseq=cmdline.split(custom_DIV)
+            cmdlineseq=cmdline.split(sys_params["divisor"])
             sys_params['total_ops']+=len(cmdlineseq)
-            temp_device['commands']=cmdlineseq.copy()
+            new_device['commands']=cmdlineseq.copy()
             cmdfile.close()
         else:
             exit_error("JSON model not allowed in single device input parameter!")
-        dev_list.append(temp_device)
+        dev_list.append(new_device)
     elif (dev_params["option"]['Device']) == 2:            
         if (dev_params["option"]['Command']) == 3:
             exit_error("JSON model not allowed in single device input parameter!")
         else:    
             for hostline in hostfile:                
                 cmdlineseq.clear()
-                temp_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"])
+                new_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"])
                 # Populating command list for current device
                 if (dev_params["option"]['Command']) == 2: 
                     cmdline=cmdfile.readline()                    
                     #print(cmdline)
-                    cmdlineseq=cmdline.split(custom_DIV)
+                    cmdlineseq=cmdline.split(sys_params["divisor"])
                     sys_params['total_ops']+=len(cmdlineseq)
                 else:
                     cmdlineseq.append(dev_params['cmd'])
                     sys_params['total_ops']+=len(cmdlineseq)
-                temp_device['commands']=cmdlineseq.copy()
-                dev_list.append(temp_device)      
+                new_device['commands']=cmdlineseq.copy()
+                dev_list.append(new_device)      
             if (dev_params["option"]['Command']) == 2:   
                 cmdfile.close()                        
         hostfile.close()
@@ -237,16 +237,16 @@ def prepare_device_data(cmd_options):
         dev_list=json.load(hostfile)
         for dev in dev_list:
             print (dev)
-            if "username" in dev:
-                if (len(dev["username"]) == 0) or dev_params['overwrite']:
-                    dev["username"]=dev_user
+            if "username" in dev["device"]:
+                if (len(dev["device"]["username"]) == 0) or dev_params['overwrite']:
+                    dev["device"]["username"]=dev_user
             else:
-                dev["username"]=dev_user
-            if "password" in dev:
-                if (len(dev["password"]) == 0) or dev_params['overwrite']:
-                    dev["password"]=dev_pass
+                dev["device"]["username"]=dev_user
+            if "password" in dev["device"]:
+                if (len(dev["device"]["password"]) == 0) or dev_params['overwrite']:
+                    dev["device"]["password"]=dev_pass
             else:
-                dev["username"]=dev_pass
+                dev["device"]["password"]=dev_pass
             sys_params['total_ops']+=len(dev['commands'])
         #print (dev_list)
     else:
@@ -259,7 +259,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV):
     """
     Function prepares all data need for successful connection to remote device.
     """
-        
+    
     hostlineseq=hostline.split(custom_DIV)    
     #print (len(hostlineseq))
     #print (len(hostline))
@@ -268,7 +268,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV):
         hostlineseq.append(dev_pass)
     #print (hostlineseq)
     #print (hostline)
-    curr_device = {
+    netmiko_device = {
         'host': hostlineseq[0],
         #'device_type': 'cisco_ios'
         'device_type': hostlineseq[1][:len(hostline)-2],
@@ -277,18 +277,21 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV):
         #'password': dev_pass,        
         'username': hostlineseq[3],
         'password': hostlineseq[4],
-        'secret': hostlineseq[4],
+        'secret': hostlineseq[4]
         #'global_delay_factor': 2
+    }
+    if (netmiko_device['device_type'] == 'juniper'):
+        netmiko_device['global_delay_factor'] = 2
+    #elif (netmiko_device['device_type'] == 'linux'):
+    #    netmiko_device['username'] = hostlineseq[3]
+    #    netmiko_device['password'] = hostlineseq[4]
+    #print (netmiko_device['username']," ",netmiko_device['password'])
+    new_device = {
+        'device':netmiko_device,
         'commands':[],
         'output':[]
     }
-    if (curr_device['device_type'] == 'juniper'):
-        curr_device['global_delay_factor'] = 2
-    #elif (curr_device['device_type'] == 'linux'):
-    #    curr_device['username'] = hostlineseq[3]
-    #    curr_device['password'] = hostlineseq[4]
-    #print (curr_device['username']," ",curr_device['password'])
-    return curr_device
+    return new_device
 
 # core function    
 def main(argumentList):
@@ -318,12 +321,12 @@ Main function that deploys list of commands to a list of devices and parses and 
     while ((sys_params['time'] or sys_params['infinite']) or iter):    
         citer+=1        
         for device in device_list:
-            #net_device = Netmiko(**device)
+            net_device = Netmiko(**device["device"])
             output=""                        
             for cmd in device['commands']:
                 count_ops+=1
-                #output = output+os.linesep+net_device.send_command_timing(cmds)
-                output = output+os.linesep+cmd
+                output = output+os.linesep+net_device.send_command_timing(cmd)
+                #output = output+os.linesep+cmd
                 if (sys_params['progress'] and sys_params['store']):
                     #print (sys_params['total_ops'], count_ops)
                     NetDeviceFunc.progress_bar(sys_params['total_ops'],count_ops)   
