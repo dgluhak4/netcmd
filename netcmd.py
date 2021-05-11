@@ -322,6 +322,7 @@ Main function that deploys list of commands to a list of devices and parses and 
     while ((sys_params['time'] or sys_params['infinite']) or iter):    
         citer+=1        
         for device in device_list:
+            print(device["device"])
             net_device = Netmiko(**device["device"])
             output=""                        
             for cmd in device['commands']:
