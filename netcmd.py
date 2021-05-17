@@ -46,7 +46,7 @@ OPTIONS:\r\n\r\n \
 -o --overwrite overwrite in-file provided username and password with the one taken from user input\r\n \
 -s --store choose if want to write command output to a file/files\r\n"
 
-DEBUG_FLAG=True
+DEBUG_FLAG=False
 
 # program exit function (with error message)
 def exit_error(err_message="Unknown error"):
