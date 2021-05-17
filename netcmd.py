@@ -29,9 +29,6 @@ from netmiko import Netmiko
 # loading logging and preparing to log
 import logging
 
-# import additional device/command related functions
-import NetDeviceFunc
-
 # GLOBALS
 HELP="Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [-j] <device+commands> [OPTIONs] \r\n\r\n \
 COMMANDS:\r\n\r\n \
@@ -48,6 +45,8 @@ OPTIONS:\r\n\r\n \
 -y --device_type choose device type (defines who expect module processes outputs from the device)\r\n \
 -o --overwrite overwrite in-file provided username and password with the one taken from user input\r\n \
 -s --store choose if want to write command output to a file/files\r\n"
+
+DEBUG_FLAG=True
 
 # program exit function (with error message)
 def exit_error(err_message="Unknown error"):
@@ -141,7 +140,6 @@ def prepare_device_data(cmd_options):
             dev_params["invalid_option"]['Device'] +=1            
             dev_params["option"]['Device']=3
             dev_params["option"]['Command']=3
-            #print (dev_params["host_file_name"])
             try:
                 hostfile=open(dev_params['host_file_name'],'r')
             except FileNotFoundError as err:
@@ -185,11 +183,11 @@ def prepare_device_data(cmd_options):
         sys_params['total_ops']*=sys_params['repeat']
 
     # provjera analize input argumenata
-    #print (dev_params)
-    #print (sys_params)
+    if (DEBUG_FLAG):
+     print (dev_params)
+     print (sys_params)
     # Getting username and password of user connecting to devices 
-    dev_user = input("Input user name used to collect information from devices: ")
-    #print ("Input user password used to connect to devices: ")
+    dev_user = input("Input user name used to collect information from devices: ")    
     dev_pass = getpass()
     # popunjavanje liste uredjaja
     cmdlineseq=[] 
@@ -203,7 +201,8 @@ def prepare_device_data(cmd_options):
         elif (dev_params["option"]['Command']) == 2:            
             # Populating command list for one device
             cmdline=cmdfile.readline()
-            #print(cmdline)
+            if (DEBUG_FLAG):
+                print(cmdline)
             cmdlineseq=cmdline.split(sys_params["divisor"])
             sys_params['total_ops']+=len(cmdlineseq)
             new_device['commands']=cmdlineseq.copy()
@@ -220,8 +219,9 @@ def prepare_device_data(cmd_options):
                 new_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"])
                 # Populating command list for current device
                 if (dev_params["option"]['Command']) == 2: 
-                    cmdline=cmdfile.readline()                    
-                    #print(cmdline)
+                    cmdline=cmdfile.readline()     
+                    if (DEBUG_FLAG):
+                        print(cmdline)
                     cmdlineseq=cmdline.split(sys_params["divisor"])
                     sys_params['total_ops']+=len(cmdlineseq)
                 else:
@@ -247,9 +247,15 @@ def prepare_device_data(cmd_options):
                     dev["device"]["password"]=dev_pass
             else:
                 dev["device"]["password"]=dev_pass
+            if "hostname" in dev:
+                if (len(dev["device"]["username"]) == 0):
+                    dev["hostname"]=dev["device"]["host"]
+            else:
+                dev["hostname"]=dev["device"]["host"]
             dev["output"]=[]
             sys_params['total_ops']+=len(dev['commands'])
-        #print (dev_list)
+        if (DEBUG_FLAG):
+            print (dev_list)
     else:
         exit_error("Invalid reference to device list!")
 
@@ -261,9 +267,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite):
     Function prepares all data need for successful connection to remote device.
     """
     
-    hostlineseq=hostline.split(custom_DIV)    
-    #print (len(hostlineseq))
-    #print (len(hostline))
+    hostlineseq=hostline.split(custom_DIV)       
     if (len(hostlineseq) == 3):
         hostlineseq.append(dev_user)
         hostlineseq.append(dev_pass)
@@ -274,8 +278,11 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite):
         hostlineseq.append(dev_pass)
     else:
         pass
-    #print (hostlineseq)
-    #print (hostline)
+    if (DEBUG_FLAG):
+        print (len(hostlineseq))
+        print (len(hostline))
+        print (hostlineseq)
+        print (hostline)
     netmiko_device = {
         'host': hostlineseq[0],
         #'device_type': 'cisco_ios'
@@ -288,11 +295,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite):
         #'global_delay_factor': 2
     }
     if (netmiko_device['device_type'] == 'juniper'):
-        netmiko_device['global_delay_factor'] = 2
-    #elif (netmiko_device['device_type'] == 'linux'):
-    #    netmiko_device['username'] = hostlineseq[3]
-    #    netmiko_device['password'] = hostlineseq[4]
-    #print (netmiko_device['username']," ",netmiko_device['password'])
+        netmiko_device['global_delay_factor'] = 2    
     new_device = {
         'device':netmiko_device,
         'hostname': hostlineseq[2],
@@ -301,10 +304,29 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite):
     }
     return new_device
 
+# function that stores complete command output per device by appending the output file
+# this allows storing many iterations per device
+def store_output(curr_device):
+    output_filename=curr_device["hostname"]+".out"
+    #output_csv_filename=curr_device['host']+".out"     
+    with open(output_filename, 'a') as hostoutputfile:
+        hostoutputfile.write(curr_device["output"])                
+
+
+# function that prints current "operations done" statistics
+def stats_output(citer,count_ops,sys_params,if_iter = False):
+
+    signs=['|','/','-','\\']
+    if if_iter:
+        print("#Iteration: {}, at: {}".format(citer,time.ctime(sys_params['timestamps'][citer])))
+        print("#Operations: {}/{}, time took: {:.4f}".format(count_ops,sys_params['total_ops']*sys_params['repeat'],sys_params['timestamps'][citer]-sys_params['timestamps'][citer-1]))
+    else:        
+        print("\r",signs[count_ops%4],"  {0:6.2f}%".format((count_ops/sys_params['total_ops'])*100), end='')
+
 # core function    
 def main(argumentList):
     """
-Main function that deploys list of commands to a list of devices and parses and stores its output
+Main function that deploys list of commands to a list of devices and prints/parses/stores its output
     """
     # global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_INFINITE
     try:
@@ -321,181 +343,51 @@ Main function that deploys list of commands to a list of devices and parses and 
     print(sys_params)
     print(device_list)
 
-    # Main loop   
-    count_ops=0 #count_ops=current number of operation done (operation=command/device)
+    # Main loop       
     iter=sys_params['repeat'] #iter=number of expected iterations
     citer=0 #citer=current iteration
     sys_params['timestamps'].append(time.time())
     while ((sys_params['time'] or sys_params['infinite']) or iter):    
+        count_ops=0 #count_ops=current number of operation done (operation=command/device)
         citer+=1        
         for device in device_list:
-            curr_device=device["device"]
-            print(curr_device)
-            net_device = Netmiko(**curr_device)
-            output=""                        
+            if (DEBUG_FLAG):
+                pass
+            else:
+                #curr_device=device["device"]
+                #print(curr_device)
+                #net_device = Netmiko(**curr_device)
+                net_device = Netmiko(**device["device"])                                    
             for cmd in device['commands']:
-                count_ops+=1
-                output = output+os.linesep+net_device.send_command_timing(cmd)
-                #output = output+os.linesep+cmd
+                output=""
+                count_ops+=1                
+                if (DEBUG_FLAG):
+                    #output = output+os.linesep+net_device.send_command_timing(cmd)
+                    output=time.asctime()+os.linesep+cmd
+                else:
+                    output=time.asctime()+os.linesep
+                    output+=net_device.send_command_timing(cmd)
                 if (sys_params['progress'] and sys_params['store']):
                     #print (sys_params['total_ops'], count_ops)
-                    NetDeviceFunc.progress_bar(sys_params['total_ops'],count_ops)   
-                #print (output)
+                    stats_output(citer,count_ops,sys_params)
+                else:
+                    print (output)
+                device["output"].append(output)            
+            if sys_params['store']:
+                print("Sada snimam jednu iteraciju")
+                store_output(device)
+                #print(device["output"])
+            device["output"].clear()                                
         sys_params['timestamps'].append(time.time())
-        if not sys_params['store']:
-            print("#Iteration: {}, at: {}".format(citer,time.ctime(sys_params['timestamps'][citer])))
-            print("#Operations: {}/{}, time took: {:.4f}".format(count_ops,sys_params['total_ops']*sys_params['repeat'],sys_params['timestamps'][citer]-sys_params['timestamps'][citer-1]))
-            print(output)
-            #print(sys_params)
-        else:
-            print("#Iteration: {}, at: {}".format(citer,time.ctime(sys_params['timestamps'][citer])))
-            print("#Operations: {}/{}, time took: {:.4f}".format(count_ops,sys_params['total_ops']*sys_params['repeat'],sys_params['timestamps'][citer]-sys_params['timestamps'][citer-1]))
-            print("Sada snimam jednu iteraciju")
+        stats_output(citer,count_ops,sys_params,True)
     #while loop control mechanism
         if (sys_params['time']):
             time.sleep(float(sys_params['repeat']))
-            count_ops=0
+            #count_ops=0
         elif (not sys_params['infinite']):
             iter = iter-1
         else:
             pass
-        output=""
-        NetDeviceFunc.site_devices.clear()
-        #NetDeviceFunc.clear_output()    
 
-"""  
-    #progress bar initialization
-    if (SHOULD_PROGRESS):
-        NetDeviceFunc.progress_bar(host_file_name, command_file_name, custom_DIV)
-
-    # Main loop        
-    while ((SHOULD_TIME or SHOULD_INFINITE) or repeat):            
-        # If there is only one device to run command(s)
-        if option['Device']==1:
-            # for one device presume cisco IOS type of device
-            hostline=host_ip+custom_DIV+user_device_type+custom_DIV
-            # getting device class object
-            curr_device=prepare_device(hostline, dev_user, dev_pass)
-            net_device = Netmiko(**curr_device)
-            NetDeviceFunc.site_devices[curr_device['host']]={} 
-            NetDeviceFunc.site_devices[curr_device['host']]['RAW']=[]
-            NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']=[]
-            # If there is only one command to execute
-            if option['Command']==1:                
-                # executes single command and stores it in output
-                output = net_device.send_command_timing(cmd)
-                #print (NetDeviceFunc.output)                               
-                NetDeviceFunc.site_devices[curr_device['host']]['RAW'].append(output)
-                if (SHOULD_PARSE): 
-                    NetDeviceFunc.parse_output(curr_device, query_data, template)   
-                else:                                   
-                    NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']=NetDeviceFunc.site_devices[curr_device['host']]['RAW']
-                if (SHOULD_STAMP):
-                    NetDeviceFunc.stamp_output(curr_device)
-                if (not SHOULD_STORE):
-                    for lines in NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']:
-                        print (lines)
-                else:
-                    NetDeviceFunc.store_output(curr_device)
-            # If there is a list of commands for device to execute
-            elif option['Command']==0:        
-                with open(command_file_name, 'r') as cmdfile:
-                    # Populating command list per device                        
-                    cmdline=cmdfile.readline()
-                    #print(cmdline)
-                    cmdlineseq=cmdline.split(custom_DIV)  
-                    # Geting command output                                          
-                    for cmds in cmdlineseq[:len(cmdlineseq)-1]:                              
-                    #hostoutputfile.write(net_device.send_command_timing(cmds))
-                        output = output+os.linesep+net_device.send_command_timing(cmds)
-                        #print (output)                                                    
-                        if (SHOULD_PROGRESS):
-                            NetDeviceFunc.progress_bar()      
-                    #print("OUTPUT=",output)            
-                    NetDeviceFunc.site_devices[curr_device['host']]['RAW'].append(output)  
-                    if (SHOULD_PARSE):
-                        NetDeviceFunc.parse_output(curr_device, query_data, template)
-                    else:                                   
-                        NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']=NetDeviceFunc.site_devices[curr_device['host']]['RAW']
-                    if (SHOULD_STAMP):
-                        NetDeviceFunc.stamp_output(curr_device)
-                    if (not SHOULD_STORE):
-                        for lines in NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']:
-                            print (lines)
-                    else:
-                        NetDeviceFunc.store_output(curr_device)
-                    #print ("+",curr_device['host'],"=",cmds)
-                #print (site_devices)     
-            else:
-                sys.exit(1)
-            net_device.disconnect()
-        # If there is a list of devices to run command(s)
-        elif option['Device']==0:
-            with open(host_file_name, 'r') as hostfile:
-                for hostline in hostfile:
-                    curr_device=prepare_device(hostline,dev_user,dev_pass)
-                    net_device = Netmiko(**curr_device)
-                    NetDeviceFunc.site_devices[curr_device['host']]={} 
-                    NetDeviceFunc.site_devices[curr_device['host']]['RAW']=[]
-                    NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']=[]
-                    # If there is only one command to execute
-                    if option['Command']==1:
-                        # executes command
-                        output = net_device.send_command_timing(cmds)
-                        #print (NetDeviceFunc.output)                               
-                        NetDeviceFunc.site_devices[curr_device['host']]['RAW'].append(output)
-                        if (SHOULD_PARSE): 
-                            NetDeviceFunc.parse_output(curr_device, query_data, template)   
-                        else:                                   
-                            NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']=NetDeviceFunc.site_devices[curr_device['host']]['RAW']
-                        if (SHOULD_STAMP):
-                            NetDeviceFunc.stamp_output(curr_device)
-                        if (not SHOULD_STORE):
-                            for lines in NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']:
-                                print (lines)
-                        else:
-                            NetDeviceFunc.store_output(curr_device)
-                    # If there is a list of commands for devices to execute
-                    elif option['Command']==0:
-                        # Populating command list per device                        
-                        cmdline=cmdfile.readline()
-                        #print(cmdline)
-                        cmdlineseq=cmdline.split(custom_DIV)  
-                        # Geting command output                      
-                        for cmds in cmdlineseq[:len(cmdlineseq)-1]:                              
-                            #hostoutputfile.write(net_device.send_command_timing(cmds))
-                            output = output+os.linesep+net_device.send_command_timing(cmds)
-                            #print (output)                                                    
-                            if (SHOULD_PROGRESS):
-                                NetDeviceFunc.progress_bar()                  
-                        NetDeviceFunc.site_devices[curr_device['host']]['RAW'].append(output)  
-                        if (SHOULD_PARSE):
-                            NetDeviceFunc.parse_output(curr_device, query_data, template)
-                        else:                                   
-                            NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']=NetDeviceFunc.site_devices[curr_device['host']]['RAW']
-                        if (SHOULD_STAMP):
-                            NetDeviceFunc.stamp_output(curr_device)
-                        if (not SHOULD_STORE):
-                            for lines in NetDeviceFunc.site_devices[curr_device['host']]['FORMAT']:
-                                print (lines)
-                        else:
-                            NetDeviceFunc.store_output(curr_device)
-                            #print ("+",curr_device['host'],"=",cmds)
-                        #print (site_devices) 
-                    else:
-                        sys.exit(1)        
-                    net_device.disconnect()    
-        #while loop control mechanism
-        if (SHOULD_TIME):
-            time.sleep(float(repeat))
-        elif (not SHOULD_INFINITE):
-            repeat-=1
-        else:
-            pass
-        output=""
-        NetDeviceFunc.site_devices.clear()
-        #NetDeviceFunc.clear_output()
-      
-"""
 if __name__ == "__main__":
     main(sys.argv[1:])
