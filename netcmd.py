@@ -236,7 +236,8 @@ def prepare_device_data(cmd_options):
         # OPEN JSON FILE AND DO SOMETHING
         dev_list=json.load(hostfile)
         for dev in dev_list:
-            print (dev)
+            if (DEBUG_FLAG):
+                print (dev)
             if "username" in dev["device"]:
                 if (len(dev["device"]["username"]) == 0) or dev_params['overwrite']:
                     dev["device"]["username"]=dev_user
@@ -311,7 +312,7 @@ def store_output(curr_device):
     #output_csv_filename=curr_device['host']+".out"     
     with open(output_filename, 'a') as hostoutputfile:
         for single_item in curr_device:
-            hostoutputfile.write(single_item)                
+            hostoutputfile.write(single_item["output"])                
 
 
 # function that prints current "operations done" statistics
@@ -341,15 +342,17 @@ Main function that deploys list of commands to a list of devices and prints/pars
     device_template={}  
     device_list=[]
     sys_params, device_list = prepare_device_data(cmd_options)
-    print(sys_params)
-    print(device_list)
+    if (DEBUG_FLAG):
+        print(sys_params)
+        print(device_list)
 
     # Main loop       
     iter=sys_params['repeat'] #iter=number of expected iterations
     citer=0 #citer=current iteration
     sys_params['timestamps'].append(time.time())
+    count_ops=0 #count_ops=current number of operation done (operation=command/device)
     while ((sys_params['time'] or sys_params['infinite']) or iter):    
-        count_ops=0 #count_ops=current number of operation done (operation=command/device)
+        #count_ops=0 #count_ops=current number of operation done (operation=command/device)
         citer+=1        
         for device in device_list:
             if (DEBUG_FLAG):
@@ -375,7 +378,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
                     print (output)
                 device["output"].append(output)            
             if sys_params['store']:
-                print("Sada snimam jednu iteraciju")
+                print("Sada snimam iteraciju")
                 store_output(device)
                 #print(device["output"])
             device["output"].clear()                                
