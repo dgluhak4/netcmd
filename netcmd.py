@@ -358,12 +358,11 @@ Main function that deploys list of commands to a list of devices and prints/pars
         citer+=1        
         for device in device_list:
             if (DEBUG_FLAG):
-                pass
+                print(curr_device)                
             else:
-                #curr_device=device["device"]
-                #print(curr_device)
+                #curr_device=device["device"]               
                 #net_device = Netmiko(**curr_device)
-                net_device = Netmiko(**device["device"])                                    
+            net_device = Netmiko(**device["device"])                                    
             for cmd in device['commands']:
                 output=""
                 count_ops+=1                
