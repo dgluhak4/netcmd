@@ -358,7 +358,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
         citer+=1        
         for device in device_list:
             if (DEBUG_FLAG):
-                print(curr_device)                
+                print(device)                
             else:
                 #curr_device=device["device"]               
                 #net_device = Netmiko(**curr_device)
