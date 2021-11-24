@@ -362,6 +362,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
             else:
                 #curr_device=device["device"]               
                 #net_device = Netmiko(**curr_device)
+                pass
             net_device = Netmiko(**device["device"])                                    
             for cmd in device['commands']:
                 output=""
