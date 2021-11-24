@@ -4,6 +4,7 @@ Script connects to Cisco devices, gets some commands output and parses output or
 
 Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [OPTIONs]
 -h --help Help screen
+-g --debug Additional debug info
 -d --device IP of the device OR -l --device_file_list file with the list of devices (mandatory)
 -c --command single command to execute OR -x --cmd_file_list file with the list of commands per device (mandatory)
 -r --repeat invoke repeat-based ot time-based re-issuing of single command or list of commands (default is 1/once, 0 for infinite, XXs for every XX seconds)
@@ -33,6 +34,7 @@ import logging
 HELP="Usage: netcmd.py [-d|-l] <device(s)> [-c|-x] <command(s)> [-j] <device+commands> [OPTIONs] \r\n\r\n \
 COMMANDS:\r\n\r\n \
 -h --help Help screen\r\n\r\n \
+-g --debug Additional debug info\r\n\r\n \
 -d --device IP of the device OR -l --device_file_list file with the list of devices (mandatory)\r\n \
 -c --command single command to execute OR -x --cmd_file_list file with the list of commands per device (mandatory)\r\n \
 -j --json json formated file with list of devices and respected commands (one file for both device and command is used)\r\n\r\n \
@@ -45,8 +47,6 @@ OPTIONS:\r\n\r\n \
 -y --device_type choose device type (defines who expect module processes outputs from the device)\r\n \
 -o --overwrite overwrite in-file provided username and password with the one taken from user input\r\n \
 -s --store choose if want to write command output to a file/files\r\n"
-
-DEBUG_FLAG=True
 
 # program exit function (with error message)
 def exit_error(err_message="Unknown error"):
@@ -82,12 +82,13 @@ def prepare_device_data(cmd_options):
     custom_DIV='%'
     default_TYPE="cisco_ios"
     default_MODEL="custom" 
+    SHOULD_DEBUG = False  #indicating that invoke should provide additional debug info about various variable values
 
     dev_params={"host_file_name":"","command_file_name":"","host_ip":"127.0.0.1","cmd":"","overwrite":SHOULD_OVERWRITE, \
         "user_device_type":default_TYPE,"invalid_option":{'Device':0,'Command':0},"option":{"Device":2,"Command":2}}
     sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"time_start":time.asctime(),"timestamps":[],"total_ops":0, \
         "time": SHOULD_TIME, "store": SHOULD_STORE, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", \
-        "template":"none", "infinite": False, "divisor": custom_DIV}
+        "template":"none", "infinite": False, "divisor": custom_DIV, "debug": SHOULD_DEBUG}
     dev_list=[]
 
     # analysis and prepraration of input arguments
@@ -95,6 +96,8 @@ def prepare_device_data(cmd_options):
         if curr_opts in ("-h", "--help"):
             print(HELP)
             sys.exit(0)
+        elif curr_opts in ("-g","--debug"):
+            sys_params["debug"] = True
         elif curr_opts in ("-p","--parse"):   
             exit_error("Feature not implemented yet")         
             #sys_params["parse"] = True
@@ -183,7 +186,7 @@ def prepare_device_data(cmd_options):
         sys_params['total_ops']*=sys_params['repeat']
 
     # provjera analize input argumenata
-    if (DEBUG_FLAG):
+    if (sys_params["debug"]):
      print (dev_params)
      print (sys_params)
     # Getting username and password of user connecting to devices 
@@ -201,7 +204,7 @@ def prepare_device_data(cmd_options):
         elif (dev_params["option"]['Command']) == 2:            
             # Populating command list for one device
             cmdline=cmdfile.readline()
-            if (DEBUG_FLAG):
+            if (sys_params["debug"]):
                 print(cmdline)
             cmdlineseq=cmdline.split(sys_params["divisor"])
             sys_params['total_ops']+=len(cmdlineseq)
@@ -220,7 +223,7 @@ def prepare_device_data(cmd_options):
                 # Populating command list for current device
                 if (dev_params["option"]['Command']) == 2: 
                     cmdline=cmdfile.readline()     
-                    if (DEBUG_FLAG):
+                    if (sys_params["debug"]):
                         print(cmdline)
                     cmdlineseq=cmdline.split(sys_params["divisor"])
                     sys_params['total_ops']+=len(cmdlineseq)
@@ -236,7 +239,7 @@ def prepare_device_data(cmd_options):
         # OPEN JSON FILE AND DO SOMETHING
         dev_list=json.load(hostfile)
         for dev in dev_list:
-            if (DEBUG_FLAG):
+            if (sys_params["debug"]):
                 print (dev)
             if "username" in dev["device"]:
                 if (len(dev["device"]["username"]) == 0) or dev_params['overwrite']:
@@ -255,7 +258,7 @@ def prepare_device_data(cmd_options):
                 dev["hostname"]=dev["device"]["host"]
             dev["output"]=[]
             sys_params['total_ops']+=len(dev['commands'])
-        if (DEBUG_FLAG):
+        if (sys_params["debug"]):
             print (dev_list)
     else:
         exit_error("Invalid reference to device list!")
@@ -279,7 +282,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite):
         hostlineseq.append(dev_pass)
     else:
         pass
-    if (DEBUG_FLAG):
+    if (sys_params["debug"]):
         print (len(hostlineseq))
         print (len(hostline))
         print (hostlineseq)
@@ -312,7 +315,7 @@ def store_output(curr_device):
     #output_csv_filename=curr_device['host']+".out"     
     with open(output_filename, 'a') as hostoutputfile:
         for single_item in curr_device["output"]:
-            if (DEBUG_FLAG):
+            if (sys_params["debug"]):
                 print(single_item)
             hostoutputfile.write(single_item)                
 
@@ -334,7 +337,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
     """
     # global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_INFINITE
     try:
-        cmd_options, cmd_values = getopt.getopt(argumentList, "hpbsoj:d:l:c:x:r:t:q:y:", ["help","parse","bar","store","overwrite",\
+        cmd_options, cmd_values = getopt.getopt(argumentList, "hgpbsoj:d:l:c:x:r:t:q:y:", ["help","debug","parse","bar","store","overwrite",\
             "json=","device_list=","device=","device_file_list=","command=","cmd_file_list=","repeat=","template=","query=","device_type="])
     except getopt.GetoptError:
         exit_error("Invalid input option!")
@@ -344,7 +347,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
     device_template={}  
     device_list=[]
     sys_params, device_list = prepare_device_data(cmd_options)
-    if (DEBUG_FLAG):
+    if (sys_params["debug"]):
         print(sys_params)
         print(device_list)
 
@@ -357,7 +360,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
         #count_ops=0 #count_ops=current number of operation done (operation=command/device)
         citer+=1        
         for device in device_list:
-            if (DEBUG_FLAG):
+            if (sys_params["debug"]):
                 print(device)                
             else:
                 #curr_device=device["device"]               
@@ -367,12 +370,12 @@ Main function that deploys list of commands to a list of devices and prints/pars
             for cmd in device['commands']:
                 output=""
                 count_ops+=1                
-                if (DEBUG_FLAG):
+                if (sys_params["debug"]):
                     #output = output+os.linesep+net_device.send_command_timing(cmd)
                     output=time.asctime()+os.linesep+cmd
                 else:
                     output=time.asctime()+os.linesep
-                output+=net_device.send_command_timing(cmd)
+                output+="\r\n"+net_device.send_command_timing(cmd)
                 if (sys_params['progress'] and sys_params['store']):
                     #print (sys_params['total_ops'], count_ops)
                     stats_output(citer,count_ops,sys_params)
