@@ -310,7 +310,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite):
 
 # function that stores complete command output per device by appending the output file
 # this allows storing many iterations per device
-def store_output(curr_device):
+def store_output(curr_device,sys_params):
     output_filename=curr_device["hostname"]+".out"
     #output_csv_filename=curr_device['host']+".out"     
     with open(output_filename, 'a') as hostoutputfile:
@@ -384,7 +384,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
                 device["output"].append(output)            
             if sys_params['store']:
                 print("Sada snimam iteraciju")
-                store_output(device)
+                store_output(device,sys_params)
                 #print(device["output"])
             device["output"].clear()                                
         sys_params['timestamps'].append(time.time())
