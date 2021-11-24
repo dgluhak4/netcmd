@@ -311,10 +311,10 @@ def store_output(curr_device):
     output_filename=curr_device["hostname"]+".out"
     #output_csv_filename=curr_device['host']+".out"     
     with open(output_filename, 'a') as hostoutputfile:
-        for single_item in curr_device:
+        for single_item in curr_device["output"]:
             if (DEBUG_FLAG):
                 print(single_item)
-            hostoutputfile.write(single_item["output"])                
+            hostoutputfile.write(single_item)                
 
 
 # function that prints current "operations done" statistics
