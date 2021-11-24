@@ -372,7 +372,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
                     output=time.asctime()+os.linesep+cmd
                 else:
                     output=time.asctime()+os.linesep
-                    output+=net_device.send_command_timing(cmd)
+                output+=net_device.send_command_timing(cmd)
                 if (sys_params['progress'] and sys_params['store']):
                     #print (sys_params['total_ops'], count_ops)
                     stats_output(citer,count_ops,sys_params)
