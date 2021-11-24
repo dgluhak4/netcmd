@@ -312,6 +312,8 @@ def store_output(curr_device):
     #output_csv_filename=curr_device['host']+".out"     
     with open(output_filename, 'a') as hostoutputfile:
         for single_item in curr_device:
+            if (DEBUG_FLAG):
+                print(single_item)
             hostoutputfile.write(single_item["output"])                
 
 
