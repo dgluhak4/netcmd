@@ -404,7 +404,9 @@ Main function that deploys list of commands to a list of devices and prints/pars
                     #print(device["output"])
                 device["output"].clear()       
             except OSError:
-                continue_error("Username/password error or reachability error. Skiping device {}, going to next.".format(device))                    
+                continue_error("Username/password error or reachability error. Skiping device {}, going to next.".format(device['host']))          
+            except:
+                continue_error("Neka greska u komunikaciji s {}".format(device['host']))          
         sys_params['timestamps'].append(time.time())
         stats_output(citer,count_ops,sys_params,True)
     #while loop control mechanism
