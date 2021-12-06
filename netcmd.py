@@ -59,6 +59,17 @@ def exit_error(err_message="Unknown error"):
     print(HELP)
     sys.exit(2)
 
+# error message function
+def continue_error(err_message="Unknown error"):
+    """
+    Error function with detail error message. Continues code execution.
+
+    Input: Error message
+    """
+    print (err_message)
+    print ("Continuing with execution!")
+    return
+
 # progress bar simulation function
 def progress_bar(total_ops, count_ops):        
 
@@ -274,7 +285,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite, debug = Fa
     
     hostlineseq=hostline.split(custom_DIV)    
     hostlineseq.pop()   
-# host data preparation
+    # host data preparation
     if (len(hostlineseq) == 3):
         hostlineseq.append(dev_user)
         hostlineseq.append(dev_pass)
@@ -290,7 +301,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite, debug = Fa
         print (len(hostline))
         print (hostlineseq)
         print (hostline)
-# host data application to host class structure
+    # host data application to host class structure
     netmiko_device = {
         'host': hostlineseq[0],
         #'device_type': 'cisco_ios'
@@ -370,27 +381,30 @@ Main function that deploys list of commands to a list of devices and prints/pars
                 #curr_device=device["device"]               
                 #net_device = Netmiko(**curr_device)
                 pass
-            net_device = Netmiko(**device["device"])                                    
-            for cmd in device['commands']:
-                output=""
-                count_ops+=1                
-                if (sys_params["debug"]):
-                    #output = output+os.linesep+net_device.send_command_timing(cmd)
-                    output=time.asctime()+os.linesep+cmd
-                else:
-                    output=time.asctime()+os.linesep
-                output+="\r\n"+net_device.send_command_timing(cmd)
-                if (sys_params['progress'] and sys_params['store']):
-                    #print (sys_params['total_ops'], count_ops)
-                    stats_output(citer,count_ops,sys_params)
-                else:
-                    print (output)
-                device["output"].append(output)            
-            if sys_params['store']:
-                print("Sada snimam iteraciju")
-                store_output(device,sys_params)
-                #print(device["output"])
-            device["output"].clear()                                
+            try:
+                net_device = Netmiko(**device["device"])                                    
+                for cmd in device['commands']:
+                    output=""
+                    count_ops+=1                
+                    if (sys_params["debug"]):
+                        #output = output+os.linesep+net_device.send_command_timing(cmd)
+                        output=time.asctime()+os.linesep+cmd
+                    else:
+                        output=time.asctime()+os.linesep
+                    output+="\r\n"+net_device.send_command_timing(cmd)
+                    if (sys_params['progress'] and sys_params['store']):
+                        #print (sys_params['total_ops'], count_ops)
+                        stats_output(citer,count_ops,sys_params)
+                    else:
+                        print (output)
+                    device["output"].append(output)            
+                if sys_params['store']:
+                    print("Sada snimam iteraciju")
+                    store_output(device,sys_params)
+                    #print(device["output"])
+                device["output"].clear()       
+            except OSError:
+                continue_error("Username/password error or reachability error. Skiping device {}, going to next.".format(device))                    
         sys_params['timestamps'].append(time.time())
         stats_output(citer,count_ops,sys_params,True)
     #while loop control mechanism
