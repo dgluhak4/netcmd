@@ -269,20 +269,18 @@ def prepare_device_data(cmd_options):
 def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite, debug = False):
     """
     Function prepares all data need for successful connection to remote device.
+    Minimal data needed: device IP, device type, device name, device username, username password.
     """
     
-    hostlineseq=hostline.split(custom_DIV)       
-    if (debug):
-        print (len(hostlineseq))
-        print (len(hostline))
-        print (hostlineseq)
-        print (hostline)
+    hostlineseq=hostline.split(custom_DIV)    
+    hostlineseq.pop()   
+# host data preparation
     if (len(hostlineseq) == 3):
         hostlineseq.append(dev_user)
         hostlineseq.append(dev_pass)
-    elif (overwrite):
-        hostlineseq.pop()
-        hostlineseq.pop()
+    elif (len(hostlineseq) == 5 and overwrite):
+        hostlineseq.pop()   
+        hostlineseq.pop()   
         hostlineseq.append(dev_user)
         hostlineseq.append(dev_pass)
     else:
@@ -292,6 +290,7 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite, debug = Fa
         print (len(hostline))
         print (hostlineseq)
         print (hostline)
+# host data application to host class structure
     netmiko_device = {
         'host': hostlineseq[0],
         #'device_type': 'cisco_ios'
