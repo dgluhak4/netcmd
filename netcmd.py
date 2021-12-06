@@ -197,7 +197,7 @@ def prepare_device_data(cmd_options):
     # ako je samo jedan uredjaj iz prompta
     if (dev_params["option"]['Device']) == 1:
         hostline=dev_params['host_ip']+sys_params["divisor"]+dev_params['user_device_type']+sys_params["divisor"]+"SINGLE_DEVICE"
-        new_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"])        
+        new_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"], dev_params["overwrite"])        
         if (dev_params["option"]['Command']) == 1:
             new_device['commands'].append(dev_params['cmd'])
             sys_params['total_ops']=1
@@ -219,7 +219,7 @@ def prepare_device_data(cmd_options):
         else:    
             for hostline in hostfile:                
                 cmdlineseq.clear()
-                new_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"])
+                new_device=prepare_device(hostline,dev_user,dev_pass, sys_params["divisor"], dev_params["overwrite"])
                 # Populating command list for current device
                 if (dev_params["option"]['Command']) == 2: 
                     cmdline=cmdfile.readline()     
