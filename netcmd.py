@@ -405,7 +405,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
                 device["output"].clear()       
             except OSError:
                 continue_error("Username/password error or reachability error. Skiping device {}, going to next.".format(device['device']['host']))   
-            except netmiko.ssh_exception.NetmikoTimeoutException:
+            except ssh_exception.NetmikoTimeoutException:
                 continue_error("TCP Connection to device {} failed".format(device['device']['host']))       
             except:
                 continue_error("Neka greska u komunikaciji s {}".format(device['device']['host']))          
