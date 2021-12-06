@@ -272,6 +272,11 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite, debug = Fa
     """
     
     hostlineseq=hostline.split(custom_DIV)       
+    if (debug):
+        print (len(hostlineseq))
+        print (len(hostline))
+        print (hostlineseq)
+        print (hostline)
     if (len(hostlineseq) == 3):
         hostlineseq.append(dev_user)
         hostlineseq.append(dev_pass)
