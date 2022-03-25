@@ -46,7 +46,8 @@ OPTIONS:\r\n\r\n \
 -b --bar choose to use progress bar while waiting for outputs (invalid when using -d and -c options)\r\n \
 -y --device_type choose device type (defines who expect module processes outputs from the device)\r\n \
 -o --overwrite overwrite in-file provided username and password with the one taken from user input\r\n \
--s --store choose if want to write command output to a file/files\r\n"
+-s --store choose if want to write command output to a file/files\r\n \
+-a --pass skip connecting to devices and collecting output, just store device list on media\r\n"
 
 # program exit function (with error message)
 def exit_error(err_message="Unknown error"):
@@ -94,12 +95,13 @@ def prepare_device_data(cmd_options):
     default_TYPE="cisco_ios"
     default_MODEL="custom" 
     SHOULD_DEBUG = False  #indicating that invoke should provide additional debug info about various variable values
+    SHOULD_PASS = False #indicating whether to pass at least once through the connection data, used for data format conversion
 
     dev_params={"host_file_name":"","command_file_name":"","host_ip":"127.0.0.1","cmd":"","overwrite":SHOULD_OVERWRITE, \
         "user_device_type":default_TYPE,"invalid_option":{'Device':0,'Command':0},"option":{"Device":2,"Command":2}}
     sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"time_start":time.asctime(),"timestamps":[],"total_ops":0, \
         "time": SHOULD_TIME, "store": SHOULD_STORE, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", \
-        "template":"none", "infinite": False, "divisor": custom_DIV, "debug": SHOULD_DEBUG}
+        "template":"none", "infinite": False, "divisor": custom_DIV, "debug": SHOULD_DEBUG, "pass": SHOULD_PASS}
     dev_list=[]
 
     # analysis and prepraration of input arguments
@@ -158,6 +160,8 @@ def prepare_device_data(cmd_options):
                 hostfile=open(dev_params['host_file_name'],'r')
             except FileNotFoundError as err:
                 exit_error(err)
+        elif curr_opts in ("-a","--pass"):
+            sys_params['pass'] = True
         elif curr_opts in ("-y","--device_type"):
             dev_params["user_device_type"]=curr_vals
         elif curr_opts in ("-d","--device"):
@@ -249,6 +253,8 @@ def prepare_device_data(cmd_options):
     elif (dev_params["option"]['Device']) == 3:
         # OPEN JSON FILE AND DO SOMETHING
         dev_list=json.load(hostfile)
+        if (sys_params["debug"]):
+            print (dev_list)
         for dev in dev_list:
             if (sys_params["debug"]):
                 print (dev)
@@ -352,7 +358,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
     """
     # global SHOULD_PARSE, SHOULD_PROGRESS, SHOULD_STORE, SHOULD_TIME, SHOULD_INFINITE
     try:
-        cmd_options, cmd_values = getopt.getopt(argumentList, "hgpbsoj:d:l:c:x:r:t:q:y:", ["help","debug","parse","bar","store","overwrite",\
+        cmd_options, cmd_values = getopt.getopt(argumentList, "hgapbsoj:d:l:c:x:r:t:q:y:", ["help","debug","pass","parse","bar","store","overwrite",\
             "json=","device_list=","device=","device_file_list=","command=","cmd_file_list=","repeat=","template=","query=","device_type="])
     except getopt.GetoptError:
         exit_error("Invalid input option!")
@@ -371,7 +377,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
     citer=0 #citer=current iteration
     sys_params['timestamps'].append(time.time())
     count_ops=0 #count_ops=current number of operation done (operation=command/device)
-    while ((sys_params['time'] or sys_params['infinite']) or iter):    
+    while (((sys_params['time'] or sys_params['infinite']) or iter) and not sys_params['pass']):    
         #count_ops=0 #count_ops=current number of operation done (operation=command/device)
         citer+=1        
         for device in device_list:
@@ -419,6 +425,8 @@ Main function that deploys list of commands to a list of devices and prints/pars
             iter = iter-1
         else:
             pass
+    if (sys_params['pass']):
+        print(device_list)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
