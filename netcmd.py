@@ -26,6 +26,8 @@ from getpass import getpass
 
 # loading network library
 from netmiko import Netmiko
+from netmiko.exceptions import NetMikoTimeoutException
+from netmiko.exceptions import NetMikoAuthenticationException
 
 # loading logging and preparing to log
 import logging
@@ -102,7 +104,7 @@ def prepare_device_data(cmd_options):
     sys_params={"repeat":1,"progress":SHOULD_PROGRESS,"time_start":time.asctime(),"timestamps":[],"total_ops":0, \
         "time": SHOULD_TIME, "store": SHOULD_STORE, "parse": SHOULD_PARSE, "datamodel":default_MODEL, "query_data":"", \
         "template":"none", "infinite": False, "divisor": custom_DIV, "debug": SHOULD_DEBUG, "pass": SHOULD_PASS}
-    dev_list=[]
+    dev_list={}
 
     # analysis and prepraration of input arguments
     for curr_opts, curr_vals in cmd_options:
@@ -220,6 +222,7 @@ def prepare_device_data(cmd_options):
             # Populating command list for one device
             cmdline=cmdfile.readline()
             if (sys_params["debug"]):
+                print("\nPrepare data - commands")
                 print(cmdline)
             cmdlineseq=cmdline.split(sys_params["divisor"])
             sys_params['total_ops']+=len(cmdlineseq)
@@ -227,7 +230,8 @@ def prepare_device_data(cmd_options):
             cmdfile.close()
         else:
             exit_error("JSON model not allowed in single device input parameter!")
-        dev_list.append(new_device)
+        #dev_list.append(new_device)
+        dev_list.update(new_device)
     elif (dev_params["option"]['Device']) == 2:            
         if (dev_params["option"]['Command']) == 3:
             exit_error("JSON model not allowed in single device input parameter!")
@@ -247,6 +251,7 @@ def prepare_device_data(cmd_options):
                     sys_params['total_ops']+=len(cmdlineseq)
                 new_device['commands']=cmdlineseq.copy()
                 dev_list.append(new_device)      
+
             if (dev_params["option"]['Command']) == 2:   
                 cmdfile.close()                        
         hostfile.close()
@@ -254,28 +259,35 @@ def prepare_device_data(cmd_options):
         # OPEN JSON FILE AND DO SOMETHING
         dev_list=json.load(hostfile)
         if (sys_params["debug"]):
+            print("\nJSON data per device data preparation")
             print (dev_list)
         for dev in dev_list:
             if (sys_params["debug"]):
+                print("\nCurrent key value from JSON data")
                 print (dev)
-            if "username" in dev_list[dev].keys():
-                if (len(dev_list[dev]["username"]) == 0) or dev_params['overwrite']:
-                    dev_list[dev]["username"]=dev_user
-            else:
-                dev_list[dev]["username"]=dev_user
-            if "password" in dev_list[dev].keys():
-                if (len(dev_list[dev]["password"]) == 0) or dev_params['overwrite']:
-                    dev_list[dev]["password"]=dev_pass
-            else:
-                dev_list[dev]["password"]=dev_pass
-            if "hostname" in dev_list[dev].keys():
-                if (len(dev_list[dev]["hostname"]) == 0):
+            if "host" in dev_list[dev]["device"].keys():
+                if "username" in dev_list[dev]["device"].keys():
+                    if (len(dev_list[dev]["device"]["username"]) == 0) or dev_params['overwrite']:
+                        dev_list[dev]["device"]["username"]=dev_user
+                else:
+                    dev_list[dev]["device"]["username"]=dev_user
+                if "password" in dev_list[dev]["device"].keys():
+                    if (len(dev_list[dev]["device"]["password"]) == 0) or dev_params['overwrite']:
+                        dev_list[dev]["device"]["password"]=dev_pass
+                else:
+                    dev_list[dev]["device"]["password"]=dev_pass
+                if "hostname" in dev_list[dev].keys():
+                    if (len(dev_list[dev]["hostname"]) == 0):
+                        dev_list[dev]["hostname"]=dev
+                else:
                     dev_list[dev]["hostname"]=dev
+                dev_list[dev]["output"]=[]
+                sys_params['total_ops']+=len(dev_list[dev]['commands'])
             else:
-                dev_list[dev]["hostname"]=dev
-            dev["output"]=[]
-            sys_params['total_ops']+=len(dev['commands'])
+                del dev_list[dev]
+                continue_error("{} device is missing mandatory host value...skiping".format(dev_list[dev]))
         if (sys_params["debug"]):
+            print("\nJSON data prepared as device list")
             print (dev_list)
     else:
         exit_error("Invalid reference to device list!")
@@ -322,10 +334,12 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite, debug = Fa
     if (netmiko_device['device_type'] == 'juniper'):
         netmiko_device['global_delay_factor'] = 2    
     new_device = {
-        'device':netmiko_device,
-        'hostname': hostlineseq[2],
-        'commands':[],
-        'output':[]
+        hostlineseq[2]: {
+            'device':netmiko_device,
+            'hostname': hostlineseq[2],
+            'commands':[],
+            'output':[]
+        }
     }
     return new_device
 
@@ -388,8 +402,8 @@ Main function that deploys list of commands to a list of devices and prints/pars
                 #net_device = Netmiko(**curr_device)
                 pass
             try:
-                net_device = Netmiko(**device["device"])                                    
-                for cmd in device['commands']:
+                net_device = Netmiko(**device_list[device]["device"])                                    
+                for cmd in device_list[device]['commands']:
                     output=""
                     count_ops+=1                
                     if (sys_params["debug"]):
@@ -403,18 +417,18 @@ Main function that deploys list of commands to a list of devices and prints/pars
                         stats_output(citer,count_ops,sys_params)
                     else:
                         print (output)
-                    device["output"].append(output)            
+                    device_list[device]["output"].append(output)            
                 if sys_params['store']:
                     print("Sada snimam iteraciju")
-                    store_output(device,sys_params)
+                    store_output(device_list[device],sys_params)
                     #print(device["output"])
                 device["output"].clear()       
-            except OSError:
-                continue_error("Username/password error or reachability error. Skiping device {}, going to next.".format(device['device']['host']))   
-            except ssh_exception.NetmikoTimeoutException:
-                continue_error("TCP Connection to device {} failed".format(device['device']['host']))       
+            except NetMikoAuthenticationException:
+                continue_error("Username/password error or reachability error. Skiping device {}, going to next.".format(device_list[device]['device']['host']))   
+            except NetMikoTimeoutException:
+                continue_error("TCP Connection to device {} failed".format(device_list[device]['device']['host']))       
             except:
-                continue_error("Neka greska u komunikaciji s {}".format(device['device']['host']))          
+                continue_error("Neka greska u komunikaciji s {}".format(device_list[device]['device']['host']))          
         sys_params['timestamps'].append(time.time())
         stats_output(citer,count_ops,sys_params,True)
     #while loop control mechanism
