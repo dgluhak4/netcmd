@@ -258,21 +258,21 @@ def prepare_device_data(cmd_options):
         for dev in dev_list:
             if (sys_params["debug"]):
                 print (dev)
-            if "username" in dev["device"]:
-                if (len(dev["device"]["username"]) == 0) or dev_params['overwrite']:
-                    dev["device"]["username"]=dev_user
+            if "username" in dev_list[dev].keys():
+                if (len(dev_list[dev]["username"]) == 0) or dev_params['overwrite']:
+                    dev_list[dev]["username"]=dev_user
             else:
-                dev["device"]["username"]=dev_user
-            if "password" in dev["device"]:
-                if (len(dev["device"]["password"]) == 0) or dev_params['overwrite']:
-                    dev["device"]["password"]=dev_pass
+                dev_list[dev]["username"]=dev_user
+            if "password" in dev_list[dev].keys():
+                if (len(dev_list[dev]["password"]) == 0) or dev_params['overwrite']:
+                    dev_list[dev]["password"]=dev_pass
             else:
-                dev["device"]["password"]=dev_pass
-            if "hostname" in dev:
-                if (len(dev["device"]["username"]) == 0):
-                    dev["hostname"]=dev["device"]["host"]
+                dev_list[dev]["password"]=dev_pass
+            if "hostname" in dev_list[dev].keys():
+                if (len(dev_list[dev]["hostname"]) == 0):
+                    dev_list[dev]["hostname"]=dev
             else:
-                dev["hostname"]=dev["device"]["host"]
+                dev_list[dev]["hostname"]=dev
             dev["output"]=[]
             sys_params['total_ops']+=len(dev['commands'])
         if (sys_params["debug"]):
