@@ -1,0 +1,19 @@
+{
+	<hostname> : {
+		"device": {
+			"device_type": <netmiko_compliant_device_type>,
+			"host": <host_ip>, //mandatory
+			"port": <ssh_port>, //optional, default 22
+			"username": <username>,
+			"password": <password>,
+			"secret": <secret>, //optional, default equals password
+		}		
+		"hostname": <hostname>,
+		"commands": [
+			<list of commands as strings separated by comma>
+		],
+		"output": [
+			<list of command output lines>
+		] //optional, generated during execution
+	}
+	
