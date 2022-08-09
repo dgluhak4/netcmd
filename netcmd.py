@@ -375,7 +375,7 @@ def store_output(curr_device,sys_params):
                 print(curr_device["output"][single_item])
                 print("\r\n", curr_device["output"][single_item]["timestamp"])
                 print("\r\n", curr_device["output"][single_item]["output"])
-            hostoutputfile.write(curr_device["output"][single_item]) 
+            hostoutputfile.write(single_item) 
             hostoutputfile.write(curr_device["output"][single_item]["output"]) 
 
 
@@ -451,7 +451,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
             except NetMikoTimeoutException:
                 continue_error("TCP Connection to device {} failed".format(device_list[device]['device']['host']))       
             except:
-                continue_error("Neka {1} greska u komunikaciji s {2}".format(sys.exc_info()[0],device_list[device]['device']['host']))          
+                continue_error("Neka {} greska u komunikaciji s {}".format(sys.exc_info()[0],device_list[device]['device']['host']))          
         sys_params['timestamps'].append(time.time())
         stats_output(citer,count_ops,sys_params,True)
     #while loop control mechanism
