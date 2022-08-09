@@ -1,0 +1,448 @@
+{
+	"10.1.248.3": {
+		"device_type": "cisco_ios",
+		"hostname": "vCore1_TK1",
+		"commands": [
+			"show clock",
+			"show proc cpu history",
+			"show proc mem | in Pool Total:"
+		]
+	},
+	"10.1.248.4": {
+		"device_type": "cisco_ios",
+		"hostname": "vCore2_TK1_bac",
+		"commands": [
+			"show clock",
+			"show proc cpu history",
+			"show proc mem | in Pool Total:"
+		]	
+	},
+	"10.2.248.1": {
+		"device_type": "cisco_xe",
+		"hostname": "ZG-UGV70-BC-1",
+		"commands": [
+			"show clock",
+			"show proc cpu history",
+			"show proc mem | in Total:"
+		]	
+	},
+	"10.2.248.2": {
+		"device_type": "cisco_xe",
+		"hostname": "ZG-UGV70-BC-2",
+		"commands": [
+			"show clock",
+			"show proc cpu history",
+			"show proc mem | in Total:"
+		]	
+	},	
+	"10.2.252.11": {
+		"device_type": "linux",
+		"hostname": "DNAC1-ZG",
+		"username": "maglev",
+		"password": "B0ro#g4j",
+		"commands": [
+			"date",
+			"magctl maglev status",
+			"magctl node status"
+		]
+	},	
+	"10.1.252.131": {
+		"device_type": "cisco_nxos",
+		"hostname": "N7k-C7009_1",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},
+	"10.1.252.132": {
+		"device_type": "cisco_nxos",
+		"hostname": "N7k-C7009_2",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]	
+	},
+	"10.1.253.10": {
+		"device_type": "cisco_nxos",
+		"hostname": "FINA-ZA-NEXUS7K-DR",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},
+	"10.250.20.43": {
+		"device_type": "cisco_nxos",
+		"hostname": "HITRO-INT-FPR4125-ASR9K-SD-1",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},	
+	"10.250.20.44": {
+		"device_type": "cisco_nxos",
+		"hostname": "HITRO-INT-FPR4125-ASR9K-SD-2",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},	
+	"10.4.82.12": {
+		"device_type": "cisco_nxos",
+		"hostname": "P1-ZG-HITRO-NTK-R32-SD-1",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},		
+	"10.4.82.17": {
+		"device_type": "cisco_nxos",
+		"hostname": "P2-ZG-HITRO-NTK-R32-SD-1",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},			
+	"10.4.82.22": {
+		"device_type": "cisco_nxos",
+		"hostname": "PE1-ZG-HITRO-NTK-R30-SD-1",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},			
+	"10.4.82.23": {
+		"device_type": "cisco_nxos",
+		"hostname": "PE1-ZG-HITRO-NTK-R32-SD-2",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},			
+	"10.4.82.27": {
+		"device_type": "cisco_nxos",
+		"hostname": "PE2-ZG-HITRO-NTK-R32-SD-1",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},			
+	"10.4.82.28": {
+		"device_type": "cisco_nxos",
+		"hostname": "PE2-ZG-HITRO-NTK-R32-SD-2",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in 'All processes:'"
+		]
+	},			
+	"10.250.20.41": {
+		"device_type": "cisco_xr",
+		"hostname": "HITRO-INT-ASR9K-R1",
+		"commands": [
+			"show clock",
+			"sh process cpu location 0/RSP0/CPU0 | inc CPU",
+			"show watchdog memory-state location 0/RSP0/CPU0",
+			"run gsp_ping -g1 -c20 -rv -q0",
+			"run gsp_ping -g1001 -c20 -rv -q0",
+			"run gsp_ping -g2001 -c20 -rv -q0",
+			"show asic-errors all location 0/RSP0/CPU0",
+			"sh cef resource hardware ingress detail location 0/RSP0/CPU0",
+			"sh cef resource hardware egress detail location 0/RSP0/CPU0",
+		]
+	},
+	"10.250.20.42": {
+		"device_type": "cisco_xr",
+		"hostname": "HITRO-INT-ASR9K-R2",
+		"commands": [
+			"show clock",
+			"sh process cpu location 0/RSP0/CPU0 | inc CPU",
+			"show watchdog memory-state location 0/RSP0/CPU0",
+			"run gsp_ping -g1 -c20 -rv -q0",
+			"run gsp_ping -g1001 -c20 -rv -q0",
+			"run gsp_ping -g2001 -c20 -rv -q0",
+			"show asic-errors all location 0/RSP0/CPU0",
+			"sh cef resource hardware ingress detail location 0/RSP0/CPU0",
+			"sh cef resource hardware egress detail location 0/RSP0/CPU0",
+		]
+	},	
+	"10.4.82.10": {
+		"device_type": "cisco_xr",
+		"hostname": "HITRO-ZG-NTK-R34-P1",
+		"commands": [
+			"show clock",
+			"sh process cpu location 0/RSP0/CPU0 | inc CPU",
+			"show watchdog memory-state location 0/RSP0/CPU0",
+			"run gsp_ping -g1 -c20 -rv -q0",
+			"run gsp_ping -g1001 -c20 -rv -q0",
+			"run gsp_ping -g2001 -c20 -rv -q0",
+			"show asic-errors all location 0/RSP0/CPU0",
+			"sh cef resource hardware ingress detail location 0/RSP0/CPU0",
+			"sh cef resource hardware egress detail location 0/RSP0/CPU0",
+		]
+	},	
+	"10.4.82.15": {
+		"device_type": "cisco_xr",
+		"hostname": "HITRO-ZG-NTK-R34-P2",
+		"commands": [
+			"show clock",
+			"sh process cpu location 0/RSP0/CPU0 | inc CPU",
+			"show watchdog memory-state location 0/RSP0/CPU0",
+			"run gsp_ping -g1 -c20 -rv -q0",
+			"run gsp_ping -g1001 -c20 -rv -q0",
+			"run gsp_ping -g2001 -c20 -rv -q0",
+			"show asic-errors all location 0/RSP0/CPU0",
+			"sh cef resource hardware ingress detail location 0/RSP0/CPU0",
+			"sh cef resource hardware egress detail location 0/RSP0/CPU0",
+		]
+	},	
+	"10.4.82.20": {
+		"device_type": "cisco_xr",
+		"hostname": "P-ZG-HITRO-NTK-R36-PE1",
+		"commands": [
+			"show clock",
+			"sh process cpu location 0/RSP0/CPU0 | inc CPU",
+			"show watchdog memory-state location 0/RSP0/CPU0",
+			"run gsp_ping -g1 -c20 -rv -q0",
+			"run gsp_ping -g1001 -c20 -rv -q0",
+			"run gsp_ping -g2001 -c20 -rv -q0",
+			"show asic-errors all location 0/RSP0/CPU0",
+			"sh cef resource hardware ingress detail location 0/RSP0/CPU0",
+			"sh cef resource hardware egress detail location 0/RSP0/CPU0",
+		]
+	},		
+	"10.4.82.25": {
+		"device_type": "cisco_xr",
+		"hostname": "P-ZG-HITRO-NTK-R36-PE1",
+		"commands": [
+			"show clock",
+			"sh process cpu location 0/RSP0/CPU0 | inc CPU",
+			"show watchdog memory-state location 0/RSP0/CPU0",
+			"run gsp_ping -g1 -c20 -rv -q0",
+			"run gsp_ping -g1001 -c20 -rv -q0",
+			"run gsp_ping -g2001 -c20 -rv -q0",
+			"show asic-errors all location 0/RSP0/CPU0",
+			"sh cef resource hardware ingress detail location 0/RSP0/CPU0",
+			"sh cef resource hardware egress detail location 0/RSP0/CPU0",
+		]
+	},		
+	"10.200.250.52": {
+		"device_type": "cisco_xe",
+		"hostname": "FINA-ZA-ASR-DR-PD",
+		"commands": [
+			"show clock",
+			"show processes cpu history",
+			"show processes mem | in Pool Total:"
+		]
+	},
+	"10.1.252.142": {
+		"device_type": "cisco_asa",
+		"hostname": "ASA5585X_master",
+		"commands": [
+			"changeto system",
+			"show clock",
+			"cluster exec show cpu usage",
+			"cluster exec show cpu usage detailed",
+			"show cluster memory",
+			"show cluster info health",
+			"show cluster info packet-distribution"
+		]
+	},
+	"10.1.252.144": {
+		"device_type": "cisco_asa",
+		"hostname": "ASA5585X_slave",
+		"commands": [
+			"changeto system",
+			"show clock",
+			"cluster exec show cpu usage",
+			"cluster exec show cpu usage detailed",
+			"show cluster memory",
+			"show cluster info health",
+			"show cluster info packet-distribution"
+		]
+	},
+	"10.250.20.45": {
+		"device_type": "cisco_asa",
+		"hostname": "FINA-INT-HITRO-FPR4125-1",
+		"commands": [
+			"connect local-mgmt",
+			"show clock",
+			"show processes | grep Cpu(s)",
+			"show processes | grep Mem"
+		]
+	},
+	"10.250.20.46": {
+		"device_type": "cisco_asa",
+		"hostname": "FINA-INT-HITRO-FPR4125-2",
+		"commands": [
+			"connect local-mgmt",
+			"show clock",
+			"show processes | grep Cpu(s)",
+			"show processes | grep Mem"
+		]
+	},
+	"10.4.82.31": {
+		"device_type": "cisco_asa",
+		"hostname": "PE1-ZG-HITRO-NTK-R36-FW1",
+		"commands": [
+			"connect local-mgmt",
+			"show clock",
+			"show processes | grep Cpu(s)",
+			"show processes | grep Mem"
+		]
+	},	
+	"10.4.82.32": {
+		"device_type": "cisco_asa",
+		"hostname": "PE2-ZG-HITRO-NTK-R36-FW2",
+		"commands": [
+			"connect local-mgmt",
+			"show clock",
+			"show processes | grep Cpu(s)",
+			"show processes | grep Mem"
+		]
+	},		
+	"10.3.248.11": {
+		"device_type": "cisco_asa",
+		"hostname": "ASA-DR",
+		"commands": [
+			"changeto system",
+			"show clock",
+			"show cpu usage context"
+		]
+	},
+	"10.1.253.13": {
+		"device_type": "linux",
+		"hostname": "F5-DR",
+		"username": "root",
+		"password": "Potrkalo32",
+		"commands": [
+			"date",
+			"tmsh show sys performance all-stats"
+		]
+	},
+	"10.1.250.54": {
+		"device_type": "linux",
+		"hostname": "F5-FINA-eC-1",
+		"username": "root",
+		"password": "Ra!dio1018Martin",
+		"commands": [
+			"date",
+			"tmsh show sys performance all-stats"
+		]
+	},
+	"10.1.250.63": {
+		"device_type": "linux",
+		"hostname": "F5-FINA-eC-2",
+		"username": "root",
+		"password": "Ra!dio1018Martin",
+		"commands": [
+			"date",
+			"tmsh show sys performance all-stats"
+		]
+	},
+	"10.1.250.55": {
+		"device_type": "linux",
+		"hostname": "F5-FINA-DC-1",
+		"username": "root",
+		"password": "Ra!dio1018Martin",
+		"commands": [
+			"date",
+			"tmsh show sys performance all-stats"
+		]
+	},
+	"10.1.250.64": {
+		"device_type": "linux",
+		"hostname": "F5-FINA-DC-2",
+		"username": "root",
+		"password": "Ra!dio1018Martin",
+		"commands": [
+			"date",
+			"tmsh show sys performance all-stats"
+		]
+	},
+	"10.1.250.56": {
+		"device_type": "linux",
+		"hostname": "F5-HITRO-eCDC-1",
+		"username": "root",
+		"password": "Ra!dio1018Martin",
+		"commands": [
+			"date",
+			"tmsh show sys performance all-stats"
+		]
+	},
+	"10.1.250.65": {
+		"device_type": "linux",
+		"hostname": "F5-HITRO-eCDC-2",
+		"username": "root",
+		"password": "Ra!dio1018Martin",
+		"commands": [
+			"date",
+			"tmsh show sys performance all-stats"
+		]
+	},
+	"10.1.250.214": {
+		"device_type": "linux",
+		"hostname": "stratum1.fina.hr",
+		"username": "root",
+		"password": "endrun_1",
+		"commands": [
+			"date",
+			"ntpq -p",
+			"sysversion",
+			"kernelversion",
+			"gpsversion",
+			"rcvrversion"
+		]
+	},
+	"10.1.250.217": {
+		"device_type": "linux",
+		"hostname": "stratumdr1.fina.hr",
+		"username": "root",
+		"password": "endrun_1",
+		"commands": [
+			"date",
+			"ntpq -p",
+			"sysversion",
+			"kernelversion",
+			"gpsversion",
+			"rcvrversion"
+		]
+	},
+	"10.3.250.214": {
+		"device_type": "linux",
+		"hostname": "stratumdr1.fina.hr",
+		"username": "root",
+		"password": "endrun_1",
+		"commands": [
+			"date",
+			"ntpq -p",
+			"sysversion",
+			"kernelversion",
+			"gpsversion",
+			"rcvrversion"
+		]
+	},
+	"10.3.250.217": {
+		"device_type": "linux",
+		"hostname": "stratumdr2.fina.hr",
+		"username": "root",
+		"password": "endrun_1",
+		"commands": [
+			"date",
+			"ntpq -p",
+			"sysversion",
+			"kernelversion",
+			"gpsversion",
+			"rcvrversion"
+		]
+	}	
+}

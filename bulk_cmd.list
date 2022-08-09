@@ -1,0 +1,3 @@
+show vlan brief%show cdp neig
+show version%show int status%show cdp neig
+show runn%show cdp

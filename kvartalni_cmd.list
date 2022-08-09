@@ -1,0 +1,23 @@
+show clock%show proc cpu history%show proc mem | in Pool Total:
+show clock%show proc cpu history%show proc mem | in Pool Total:
+show clock%show processes cpu history%show processes mem | in "All processes:"
+show clock%show processes cpu history%show processes mem | in "All processes:"
+show clock%show processes cpu history%show processes mem | in "All processes:"
+show clock%show proc cpu history%show platf hardw capa
+show clock%show proc cpu history%show platf hardw capa
+show clock%show proc cpu history%show processes mem | in Pool Total:
+show clock%show processes cpu history%show processes mem | in Pool Total:
+show system uptime%show chassis routing-engine%show system memory | match "memory:|distribution:|Map|map"%show chassis alarms
+show system uptime%show chassis routing-engine%show system memory | match "memory:|distribution:|Map|map"%show chassis alarms
+changeto system%show clock%cluster exec show cpu usage%cluster exec show cpu usage detailed%show cluster memory%show cluster info health%show cluster info packet-distribution
+changeto system%show clock%cluster exec show cpu usage%cluster exec show cpu usage detailed%show cluster memory%show cluster info health%show cluster info packet-distribution
+changeto system%show clock%show cpu usage detailed
+changeto system%show clock%show cpu usage detailed
+changeto system%show clock%show cpu usage context
+date%tmsh show sys performance all-stats
+date%tmsh show sys performance all-stats
+date%tmsh show sys performance all-stats
+date%tmsh show sys performance all-stats
+date%tmsh show sys performance all-stats
+date%tmsh show sys performance all-stats
+date%tmsh show sys performance all-stats
