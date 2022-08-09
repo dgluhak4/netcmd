@@ -301,7 +301,7 @@ def prepare_device_data(cmd_options):
                 sys_params['total_ops']+=len(dev_list[dev]['commands'])
             else:                
                 continue_error("{} device is missing mandatory host value...skiping".format(dev_list[dev]["hostname"]))
-                missing_host.append[dev]
+                missing_host.append(dev)
         for dev in missing_host:
             del dev_list[dev]
         if (sys_params["debug"]):
