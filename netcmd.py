@@ -429,7 +429,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
                 for cmd in device_list[device]['commands']:
                     #output=""
                     count_ops+=1  
-                    device_list[device]["output"][cmd]={"timestamp","output"}
+                    device_list[device]["output"][cmd] = {}
                     device_list[device]["output"][cmd]["timestamp"]=time.asctime()
                     device_list[device]["output"][cmd]["output"]=net_device.send_command_timing(cmd)
                     if (sys_params['progress'] and sys_params['store']):
