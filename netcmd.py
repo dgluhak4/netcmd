@@ -296,7 +296,7 @@ def prepare_device_data(cmd_options):
                         dev_list[dev]["hostname"]=dev
                 else:
                     dev_list[dev]["hostname"]=dev
-                dev_list[dev]["output"]=[]
+                dev_list[dev]["output"]={}
                 sys_params['total_ops']+=len(dev_list[dev]['commands'])
             else:                
                 continue_error("{} device is missing mandatory host value...skiping".format(dev_list[dev]["hostname"]))
@@ -363,12 +363,14 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite, debug = Fa
 def store_output(curr_device,sys_params):
     output_filename=curr_device["hostname"]+".out"
     #output_csv_filename=curr_device['host']+".out"     
+    hostoutputfile.write(curr_device["hostname"])
     with open(output_filename, 'a') as hostoutputfile:
         for single_item in curr_device["output"]:
             if (sys_params["debug"]):
                 print("\nIspis snimljenih podataka (f(store_output))")
-                print(single_item)
-            hostoutputfile.write(single_item)                
+                print(curr_device["output"][single_item], "\r\n", curr_device["output"][single_item]["timestamp"], "\r\n", curr_device["output"][single_item]["output"])
+            hostoutputfile.write(curr_device["output"][single_item]) 
+            hostoutputfile.write(curr_device["output"][single_item]["output"]) 
 
 
 # function that prints current "operations done" statistics
@@ -422,21 +424,17 @@ Main function that deploys list of commands to a list of devices and prints/pars
             try:
                 net_device = Netmiko(**device_list[device]["device"])                                    
                 for cmd in device_list[device]['commands']:
-                    output=""
-                    count_ops+=1                
-                    if (sys_params["debug"]):
-                        #output = output+os.linesep+net_device.send_command_timing(cmd)
-                        print("\nUbacivanje komande u output komande (f(main))")
-                        output=time.asctime()+os.linesep+cmd
-                    else:
-                        output=time.asctime()+os.linesep
-                    output+="\r\n"+net_device.send_command_timing(cmd)
+                    #output=""
+                    count_ops+=1  
+                    device_list[device]["output"][cmd]={"timestamp","output"}
+                    device_list[device]["output"][cmd]["timestamp"]=time.asctime()
+                    device_list[device]["output"][cmd]["output"]=net_device.send_command_timing(cmd)
                     if (sys_params['progress'] and sys_params['store']):
                         #print (sys_params['total_ops'], count_ops)
                         stats_output(citer,count_ops,sys_params)
                     else:
-                        print (output)
-                    device_list[device]["output"].append(output)            
+                        print (device_list[device]["output"][cmd]["output"])
+                    #device_list[device]["output"].append(output)            
                 if sys_params['store']:
                     print("Sada snimam iteraciju")
                     store_output(device_list[device],sys_params)
@@ -447,7 +445,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
             except NetMikoTimeoutException:
                 continue_error("TCP Connection to device {} failed".format(device_list[device]['device']['host']))       
             except:
-                continue_error("Neka greska u komunikaciji s {}".format(device_list[device]['device']['host']))          
+                continue_error("Neka nepoznata greska u komunikaciji s {}".format(device_list[device]['device']['host']))          
         sys_params['timestamps'].append(time.time())
         stats_output(citer,count_ops,sys_params,True)
     #while loop control mechanism
