@@ -379,6 +379,7 @@ def store_output(curr_device,sys_params):
             hostoutputfile.write(single_item) 
             hostoutputfile.write("\r\n")
             hostoutputfile.write(curr_device["output"][single_item]["output"]) 
+            hostoutputfile.write("\r\n")
 
 
 # function that prints current "operations done" statistics
