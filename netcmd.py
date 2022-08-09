@@ -375,7 +375,9 @@ def store_output(curr_device,sys_params):
                 print(curr_device["output"][single_item])
                 print("\r\n", curr_device["output"][single_item]["timestamp"])
                 print("\r\n", curr_device["output"][single_item]["output"])
+            hostoutputfile.write("\r\n")
             hostoutputfile.write(single_item) 
+            hostoutputfile.write("\r\n")
             hostoutputfile.write(curr_device["output"][single_item]["output"]) 
 
 
