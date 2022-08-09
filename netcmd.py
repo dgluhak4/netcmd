@@ -371,7 +371,10 @@ def store_output(curr_device,sys_params):
         for single_item in curr_device["output"]:
             if (sys_params["debug"]):
                 print("\nIspis snimljenih podataka (f(store_output))")
-                print(curr_device["output"][single_item], "\r\n", curr_device["output"][single_item]["timestamp"], "\r\n", curr_device["output"][single_item]["output"])
+                print(single_item)
+                print(curr_device["output"][single_item])
+                print("\r\n", curr_device["output"][single_item]["timestamp"])
+                print("\r\n", curr_device["output"][single_item]["output"])
             hostoutputfile.write(curr_device["output"][single_item]) 
             hostoutputfile.write(curr_device["output"][single_item]["output"]) 
 
