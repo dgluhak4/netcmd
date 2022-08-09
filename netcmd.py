@@ -365,9 +365,9 @@ def prepare_device(hostline,dev_user,dev_pass, custom_DIV, overwrite, debug = Fa
 # this allows storing many iterations per device
 def store_output(curr_device,sys_params):
     output_filename=curr_device["hostname"]+".out"
-    #output_csv_filename=curr_device['host']+".out"     
-    hostoutputfile.write(curr_device["hostname"])
+    #output_csv_filename=curr_device['host']+".out"         
     with open(output_filename, 'a') as hostoutputfile:
+        hostoutputfile.write(curr_device["hostname"])
         for single_item in curr_device["output"]:
             if (sys_params["debug"]):
                 print("\nIspis snimljenih podataka (f(store_output))")
