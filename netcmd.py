@@ -272,6 +272,7 @@ def prepare_device_data(cmd_options):
             print("\nLoaded JSON data (f(prepare_device_data))")
             print (dev_list)
         for dev in dev_list:
+            missing_host=[]
             if (sys_params["debug"]):
                 print("\nCurrent key value from JSON data (f(prepare_device_data))")
                 print (dev)
@@ -300,7 +301,9 @@ def prepare_device_data(cmd_options):
                 sys_params['total_ops']+=len(dev_list[dev]['commands'])
             else:                
                 continue_error("{} device is missing mandatory host value...skiping".format(dev_list[dev]["hostname"]))
-                del dev_list[dev]
+                missing_host.append[dev]
+        for dev in missing_host:
+            del dev_list[dev]
         if (sys_params["debug"]):
             print("\nJSON data prepared as device list (f(prepare_device_data))")
             print (dev_list)
