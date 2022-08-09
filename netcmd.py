@@ -451,7 +451,7 @@ Main function that deploys list of commands to a list of devices and prints/pars
             except NetMikoTimeoutException:
                 continue_error("TCP Connection to device {} failed".format(device_list[device]['device']['host']))       
             except:
-                continue_error("Neka nepoznata greska u komunikaciji s {}".format(device_list[device]['device']['host']))          
+                continue_error("Neka {1} greska u komunikaciji s {2}".format(sys.exc_info()[0],device_list[device]['device']['host']))          
         sys_params['timestamps'].append(time.time())
         stats_output(citer,count_ops,sys_params,True)
     #while loop control mechanism
